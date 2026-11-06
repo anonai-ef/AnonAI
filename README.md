@@ -60,7 +60,27 @@ flowchart LR
   Ethrex -->|frame 3, as sender| WETH
   Ethrex -->|consumes nonce key| NM
   ACC & PM -.->|staked 0.012 ETH| REG
+
+  classDef ownerNode fill:#fde68a,stroke:#b45309,color:#1f1300
+  classDef agentNode fill:#bfdbfe,stroke:#1d4ed8,color:#0b1a3a
+  classDef coreNode fill:#c7d2fe,stroke:#4338ca,color:#111036
+  classDef poolNode fill:#99f6e4,stroke:#0f766e,color:#042f2e
+  classDef ours fill:#ddd6fe,stroke:#6d28d9,color:#1e1033
+  classDef predeploy fill:#e5e7eb,stroke:#4b5563,color:#111827
+  class CLI ownerNode
+  class Claude,MCP,Dash,Runner agentNode
+  class Core coreNode
+  class GW,Miner,Ethrex poolNode
+  class KS,ACC,PM,VER ours
+  class RR,NM,REG,WETH predeploy
+  style owner fill:#fffbeb,stroke:#f59e0b
+  style agent fill:#eff6ff,stroke:#3b82f6
+  style mempool fill:#f0fdfa,stroke:#14b8a6
+  style chain fill:#f5f3ff,stroke:#8b5cf6
 ```
+
+Yellow: the owner. Blue: the agent side (Claude, the dashboard, and the local core that holds the secrets).
+Teal: the public mempool. Purple: the four contracts this project deploys. Grey: devnet predeploys.
 
 One action is one frame transaction with four frames:
 
