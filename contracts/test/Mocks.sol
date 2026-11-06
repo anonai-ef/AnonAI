@@ -4,16 +4,31 @@ pragma solidity ^0.8.24;
 import {Test} from "forge-std/Test.sol";
 
 /// The test EVM has no EIP-8141 opcodes. HegotaSupport's constructor creates one helper per opcode in a fixed order,
-/// so their addresses are known. Helpers take raw abi-encoded operands (no selector) and answer one word, so
-/// `vm.mockCall` on (helper, operands) stands in for an opcode result; an operand nobody mocked falls through to the
-/// real Yul helper, whose opcode is invalid here, and reverts. APPROVE runs by delegatecall, so it gets etched code.
+/// so their addresses are known. Helpers take raw abi-encoded operands (no selector) and answer one word (or raw
+/// bytes for the *COPY opcodes), so `vm.mockCall` on (helper, operands) stands in for an opcode result; an operand
+/// nobody mocked falls through to the real Yul helper, whose opcode is invalid here, and reverts. APPROVE runs by
+/// delegatecall, so it gets etched code.
 /// Order on ERC8421_WORKSHOP: Approve 1, TxParam 2, FrameDataLoad 3, FrameDataCopy 4, FrameParam 5, SigParam 6, SigDataCopy 7.
 abstract contract HegotaMocks is Test {
     uint256 internal constant APPROVE_NONCE = 1;
     uint256 internal constant TXPARAM_NONCE = 2;
     uint256 internal constant FRAMEDATALOAD_NONCE = 3;
+    uint256 internal constant FRAMEDATACOPY_NONCE = 4;
     uint256 internal constant FRAMEPARAM_NONCE = 5;
     uint256 internal constant SIGPARAM_NONCE = 6;
+
+    // TXPARAM ids used by the contracts under test
+    uint256 internal constant TX_SENDER = 2;
+    uint256 internal constant TX_MAX_COST = 6;
+    uint256 internal constant TX_FRAME_COUNT = 9;
+    uint256 internal constant TX_CURRENT_FRAME_INDEX = 10;
+    uint256 internal constant TX_NONCE_KEY_COUNT = 14;
+    uint256 internal constant TX_NONCE_KEY_0 = 16;
+    // FRAMEPARAM ids
+    uint256 internal constant FP_RESOLVED_TARGET = 0;
+    uint256 internal constant FP_DATA_LENGTH = 4;
+    uint256 internal constant FP_STATUS = 5;
+    uint256 internal constant FP_VALUE = 8;
 
     function helperOf(address account, uint256 nonce) internal pure returns (address) {
         return vm.computeCreateAddress(account, nonce);
@@ -37,6 +52,11 @@ abstract contract HegotaMocks is Test {
 
     function mockFrameDataWord(address account, uint256 offset, uint256 frameIndex, bytes32 word) internal {
         vm.mockCall(helperOf(account, FRAMEDATALOAD_NONCE), abi.encode(offset, frameIndex), abi.encode(word));
+    }
+
+    /// FRAMEDATACOPY answers raw bytes (HelperCalls.read returns the helper output as-is).
+    function mockFrameDataCopy(address account, uint256 offset, uint256 length, uint256 frameIndex, bytes memory data) internal {
+        vm.mockCall(helperOf(account, FRAMEDATACOPY_NONCE), abi.encode(offset, length, frameIndex), data);
     }
 }
 
