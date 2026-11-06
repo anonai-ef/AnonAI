@@ -99,6 +99,7 @@ export function LiveView({ f, o }: { f: Facts; o: Overview | null }) {
 
   useEffect(() => {
     if (!health?.ok) return;
+    // start from the runner's current event id: the backlog belongs to earlier sessions, not to this page
     const off = subscribe((e) => {
       setLog((l) => [...l.slice(-199), e]);
       const next = reduceRun(runRef.current, e);
@@ -107,7 +108,7 @@ export function LiveView({ f, o }: { f: Facts; o: Overview | null }) {
         runRef.current = next;
         setRun(next);
       }
-    });
+    }, (health as any).events ?? 0);
     return off;
   }, [health?.ok]);
 
