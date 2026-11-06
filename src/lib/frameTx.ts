@@ -3,11 +3,11 @@ import type { Address, Hex } from "viem";
 import { getProfile } from "@forshtat/hegota-support/profiles";
 import * as lib from "@forshtat/hegota-support/tx";
 import { toWire, explainRejection } from "@forshtat/hegota-support/rpc";
-import type { Frame, FrameTx, RecentRootReference } from "@forshtat/hegota-support/tx";
+import type { Frame, FrameTx, RecentRootReference, SignatureEntry } from "@forshtat/hegota-support/tx";
 import { loadConfig } from "./config.js";
 import { rpc } from "./rpc.js";
 
-export type { Frame, FrameTx, RecentRootReference };
+export type { Frame, FrameTx, RecentRootReference, SignatureEntry };
 export { toWire, explainRejection };
 
 export const profile = getProfile("ethrex-eip8141-tracer");
@@ -24,15 +24,21 @@ export const preVerifyFrame = (target: Address, execution: bigint, o: FrameOpts 
 export const senderFrame = (target: Address, execution: bigint, o: FrameOpts = {}): Frame =>
   lib.frame(profile, "SENDER", { target, execution, ...o });
 
-/** Assembles a transaction with one secp256k1 signature entry (filled by `sign`) for `signer`. */
+/** A scheme-0 (ARBITRARY) signature entry: no cryptographic check, the sender contract's logic decides. */
+export const arbitrarySignature = (): SignatureEntry => ({ scheme: lib.sigScheme(profile, "ARBITRARY"), signer: "0x", msg: "0x", signature: "0x" });
+
+/**
+ * Assembles a transaction. By default it carries one secp256k1 signature entry (filled by `sign`) for `signer`;
+ * pass `signatures` to use another scheme (for example `[arbitrarySignature()]`).
+ */
 export function assemble(a: {
   sender: Address; nonceSeq: bigint; nonceKeys?: bigint[]; frames: Frame[]; signer?: Address;
-  recentRootReferences?: RecentRootReference[]; maxFeePerGas?: bigint;
+  signatures?: SignatureEntry[]; recentRootReferences?: RecentRootReference[]; maxFeePerGas?: bigint;
 }): FrameTx {
   const cfg = loadConfig();
   const tx = lib.newTx({
     chainId: cfg.chainId, sender: a.sender, nonceSeq: a.nonceSeq, nonceKeys: a.nonceKeys, frames: a.frames,
-    signatures: [lib.secp256k1Placeholder(profile, a.signer)],
+    signatures: a.signatures ?? [lib.secp256k1Placeholder(profile, a.signer)],
     fees: { maxFeePerGas: a.maxFeePerGas ?? cfg.maxFeePerGasWei },
   });
   return a.recentRootReferences ? { ...tx, recentRootReferences: a.recentRootReferences } : tx;
