@@ -9,6 +9,7 @@ export interface Config {
   chainId: number;
   gatewayUrl: string;
   ethrexUrl: string;
+  minerUrl: string;
   explorerUrl: string;
   stakingRegistry: Address;
   recentRootAddress: Address;
@@ -49,6 +50,7 @@ export function loadConfig(): Config {
     chainId: num("chainId"),
     gatewayUrl: str("gatewayUrl"),
     ethrexUrl: str("ethrexUrl"),
+    minerUrl: str("minerUrl"),
     explorerUrl: str("explorerUrl"),
     stakingRegistry: addr("stakingRegistry"),
     recentRootAddress: addr("recentRootAddress"),

@@ -3,6 +3,9 @@
   chainId: 1337,
   gatewayUrl: "https://altmempoolgateway.forshtat.com/rpc",   // sidecar: eth_sendFrameTransaction, explorer, faucet
   ethrexUrl: "https://altmempool.forshtat.com",                // execution client: eth_* and eth_sendRawTransaction
+  // The miner's own sidecar. Transactions are also submitted here when the gateway's gossip does not reach it
+  // (observed after devnet restarts). Same public mempool, same rules; the hash is identical so nothing doubles.
+  minerUrl: "https://altmempool.forshtat.com/rpc",
   explorerUrl: "https://explorer.altmempool.wtf/",
   stakingRegistry: "0xd51c04d7a0b01124e84de152f4e56d9eecb22d2f",
   recentRootAddress: "0x0000000000000000000000000000000000008272",
@@ -15,7 +18,8 @@
   maxFeePerGasGwei: "2",
   legacyGasPriceGwei: "0.002",
   deployGasLimit: 6000000,
-  heavyDeployGasLimit: 14000000,   // SemaphoreVerifier (37 KB initcode) and PoseidonT3 (23 KB) also pay state gas here
+  // Ceiling for estimated gas. Code deposits pay state gas on this devnet (PoseidonT3 estimates at ~38M); blocks allow 60M.
+  heavyDeployGasLimit: 55000000,
   stakeEth: "0.012",
   unstakeDelaySec: 86400,
   // creation values: the account needs its stake plus margin, the paymaster a float to pay gas from

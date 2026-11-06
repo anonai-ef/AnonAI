@@ -32,20 +32,32 @@ export async function waitMined(hash: Hex): Promise<any> {
   throw new Error(`TX_NOT_MINED: ${hash} not mined within ${cfg().txTimeoutSec}s`);
 }
 
+/**
+ * Gas for an ordinary transaction: the node's estimate plus 25%, capped by `heavyDeployGasLimit`. This devnet charges
+ * state gas for code deposits, so a 23 KB contract estimates at ~38M gas while blocks allow 60M; fixed limits fail.
+ */
+async function gasFor(from: Address, to: Address | undefined, data: Hex, value: bigint): Promise<bigint> {
+  const est = await publicClient().estimateGas({ account: from, to, data, value });
+  const withMargin = (est * 125n) / 100n;
+  return withMargin > cfg().heavyDeployGasLimit ? cfg().heavyDeployGasLimit : withMargin;
+}
+
 /** Deploys creation bytecode with a legacy tx from `key`. `value` funds the contract through CREATE (a later transfer would hit its fallback). */
 export async function deploy(key: Hex, bytecode: Hex, value = 0n, gas?: bigint): Promise<Address> {
   const w = walletClient(key);
-  const hash = await w.sendTransaction({ data: bytecode, value, gas: gas ?? cfg().deployGasLimit, gasPrice: cfg().legacyGasPriceWei });
+  const from = privateKeyToAccount(key).address;
+  const hash = await w.sendTransaction({ data: bytecode, value, gas: gas ?? (await gasFor(from, undefined, bytecode, value)), gasPrice: cfg().legacyGasPriceWei });
   const r = await waitMined(hash);
-  if (r.status !== "0x1" || !r.contractAddress) throw new Error(`DEPLOY_FAILED: ${hash}`);
+  if (r.status !== "0x1" || !r.contractAddress) throw new Error(`DEPLOY_FAILED: ${hash} (gas used ${parseInt(r.gasUsed)})`);
   return r.contractAddress as Address;
 }
 
-/** A plain legacy call from `key` (owner-side admin calls: fund, addAgent, commit root). */
-export async function sendLegacy(key: Hex, to: Address, data: Hex, value = 0n, gas = 500_000n): Promise<Hex> {
-  const hash = await walletClient(key).sendTransaction({ to, data, value, gas, gasPrice: cfg().legacyGasPriceWei });
+/** A plain legacy call from `key` (owner-side admin calls: fund, register, commit root). */
+export async function sendLegacy(key: Hex, to: Address, data: Hex, value = 0n, gas?: bigint): Promise<Hex> {
+  const from = privateKeyToAccount(key).address;
+  const hash = await walletClient(key).sendTransaction({ to, data, value, gas: gas ?? (await gasFor(from, to, data, value)), gasPrice: cfg().legacyGasPriceWei });
   const r = await waitMined(hash);
-  if (r.status !== "0x1") throw new Error(`TX_REVERTED: ${hash}`);
+  if (r.status !== "0x1") throw new Error(`TX_REVERTED: ${hash} (gas used ${parseInt(r.gasUsed)})`);
   return hash;
 }
 

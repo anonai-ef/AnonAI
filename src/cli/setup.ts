@@ -43,7 +43,7 @@ async function main() {
     log(`PoseidonT3 already at ${cfg.poseidonT3}`);
   } else {
     log("deploying PoseidonT3 through the deterministic proxy…");
-    await sendLegacy(key, cfg.deterministicProxy, poseidon.PoseidonT3.data as Hex, 0n, cfg.heavyDeployGasLimit);
+    await sendLegacy(key, cfg.deterministicProxy, poseidon.PoseidonT3.data as Hex);
     if (!(await hasCode(cfg.poseidonT3))) throw new Error("PoseidonT3 did not land at the expected address");
     log(`PoseidonT3 deployed at ${cfg.poseidonT3}`);
   }
@@ -55,7 +55,7 @@ async function main() {
   // 2. SemaphoreVerifier (stateless Groth16 verifier with keys for depths 1..32).
   if (await stale("verifier")) {
     log("deploying SemaphoreVerifier…");
-    remember("verifier", await deploy(key, artifact("SemaphoreVerifier").bytecode, 0n, cfg.heavyDeployGasLimit));
+    remember("verifier", await deploy(key, artifact("SemaphoreVerifier").bytecode));
   }
   const verifier = readState().deployments.verifier!;
   log(`SemaphoreVerifier ${verifier}`);
@@ -65,7 +65,7 @@ async function main() {
     log("deploying Keystore…");
     const a = artifact("Keystore");
     const data = encodeDeployData({ abi: a.abi, bytecode: linkBytecode(a, { PoseidonT3: cfg.poseidonT3 }), args: [BigInt(cfg.epochBlocks)] });
-    remember("keystore", await deploy(key, data, 0n, cfg.heavyDeployGasLimit));
+    remember("keystore", await deploy(key, data));
   }
   const keystore = readState().deployments.keystore!;
   log(`Keystore ${keystore}`);
@@ -75,7 +75,7 @@ async function main() {
     log("deploying SharedAccount…");
     const a = artifact("SharedAccount");
     const data = encodeDeployData({ abi: a.abi, bytecode: a.bytecode, args: [keystore, verifier] });
-    remember("account", await deploy(key, data, cfg.accountFundingWei, cfg.heavyDeployGasLimit));
+    remember("account", await deploy(key, data, cfg.accountFundingWei));
   }
   const account = readState().deployments.account!;
   log(`SharedAccount ${account}`);
@@ -85,7 +85,7 @@ async function main() {
     log("deploying BudgetPaymaster…");
     const a = artifact("BudgetPaymaster");
     const data = encodeDeployData({ abi: a.abi, bytecode: a.bytecode, args: [account] });
-    remember("paymaster", await deploy(key, data, cfg.paymasterFundingWei, cfg.heavyDeployGasLimit));
+    remember("paymaster", await deploy(key, data, cfg.paymasterFundingWei));
   }
   const paymaster = readState().deployments.paymaster!;
   log(`BudgetPaymaster ${paymaster}`);
