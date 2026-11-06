@@ -5,7 +5,9 @@
   "type": "module",
   "description": "AnonAI: anonymous, gas-sponsored actions for AI agents via EIP-8141 frame transactions and the ERC-8421 alt-mempool",
   "license": "MIT",
-  "engines": { "node": ">=20.12" },
+  "engines": {
+    "node": ">=20.12"
+  },
   "scripts": {
     "typecheck": "tsc --noEmit",
     "build:contracts": "forge build --root contracts && node scripts/export-artifacts.mjs",
@@ -15,7 +17,13 @@
   "dependencies": {
     "@forshtat/hegota-support": "0.0.1",
     "@modelcontextprotocol/sdk": "^1.12.0",
+    "@semaphore-protocol/contracts": "4.14.5",
+    "@semaphore-protocol/group": "4.14.5",
+    "@semaphore-protocol/identity": "4.14.5",
+    "@semaphore-protocol/proof": "4.14.5",
+    "@zk-kit/lean-imt.sol": "2.0.1",
     "json5": "^2.2.3",
+    "poseidon-solidity": "0.0.5",
     "viem": "^2.57.7",
     "zod": "^3.23.8"
   },

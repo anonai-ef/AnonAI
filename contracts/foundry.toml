@@ -6,5 +6,10 @@ libs = ["lib"]
 solc_version = "0.8.28"
 via_ir = true
 evm_version = "cancun"
-remappings = ["@forshtat/hegota-support/=../node_modules/@forshtat/hegota-support/"]
+remappings = [
+  "@forshtat/hegota-support/=../node_modules/@forshtat/hegota-support/",
+  "@semaphore-protocol/contracts/=../node_modules/@semaphore-protocol/contracts/",
+  "@zk-kit/lean-imt.sol/=../node_modules/@zk-kit/lean-imt.sol/",
+  "poseidon-solidity/=../node_modules/poseidon-solidity/",
+]
 allow_paths = ["../node_modules"]
