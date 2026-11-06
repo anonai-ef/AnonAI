@@ -37,8 +37,8 @@ export class KeystoreClient {
   epochBlocks = () => this.read<bigint>("epochBlocks");
 
   /** Sends an owner-side call and returns the EIP-8272 reference of the root it committed (slot from the receipt's block). */
-  private async commitCall(ownerKey: Hex, data: Hex, policyClass: Hex, gas: bigint): Promise<{ txHash: Hex; recentRoot: RecentRootReference; seq: bigint }> {
-    const txHash = await sendLegacy(ownerKey, this.address, data, 0n, gas);
+  private async commitCall(ownerKey: Hex, data: Hex, policyClass: Hex): Promise<{ txHash: Hex; recentRoot: RecentRootReference; seq: bigint }> {
+    const txHash = await sendLegacy(ownerKey, this.address, data, 0n); // gas estimated: Poseidon inserts + state gas vary
     const receipt = await waitMined(txHash);
     const slot = await blockSlot(receipt.blockNumber);
     const root = await this.root(policyClass);
@@ -47,13 +47,13 @@ export class KeystoreClient {
   }
 
   register = (ownerKey: Hex, policyClass: Hex, leaves: bigint[]) =>
-    this.commitCall(ownerKey, encodeFunctionData({ abi: KEYSTORE_ABI, functionName: "register", args: [policyClass, leaves] }), policyClass, 1_500_000n);
+    this.commitCall(ownerKey, encodeFunctionData({ abi: KEYSTORE_ABI, functionName: "register", args: [policyClass, leaves] }), policyClass);
 
   revoke = (ownerKey: Hex, policyClass: Hex, leaf: bigint, siblings: bigint[]) =>
-    this.commitCall(ownerKey, encodeFunctionData({ abi: KEYSTORE_ABI, functionName: "revoke", args: [policyClass, leaf, siblings] }), policyClass, 1_500_000n);
+    this.commitCall(ownerKey, encodeFunctionData({ abi: KEYSTORE_ABI, functionName: "revoke", args: [policyClass, leaf, siblings] }), policyClass);
 
   heartbeat = (ownerKey: Hex, policyClass: Hex) =>
-    this.commitCall(ownerKey, encodeFunctionData({ abi: KEYSTORE_ABI, functionName: "heartbeat", args: [policyClass] }), policyClass, 500_000n);
+    this.commitCall(ownerKey, encodeFunctionData({ abi: KEYSTORE_ABI, functionName: "heartbeat", args: [policyClass] }), policyClass);
 
   /** The current root's EIP-8272 reference, for building a transaction without a fresh commit. Needs the slot the
    *  root was committed in: looked up from the latest RootCommitted event of the class. */
