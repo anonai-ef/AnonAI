@@ -1,0 +1,18 @@
+// Devnet configuration (chain 1337, the public ERC-8421 alt-mempool devnet). Read-only for the code.
+{
+  chainId: 1337,
+  gatewayUrl: "https://altmempoolgateway.forshtat.com/rpc",   // sidecar: eth_sendFrameTransaction, explorer, faucet
+  ethrexUrl: "https://altmempool.forshtat.com",                // execution client: eth_* and eth_sendRawTransaction
+  explorerUrl: "https://explorer.altmempool.wtf/",
+  stakingRegistry: "0xd51c04d7a0b01124e84de152f4e56d9eecb22d2f",
+  recentRootAddress: "0x0000000000000000000000000000000000008272",
+  nonceManager: "0x0000000000000000000000000000000000008250",
+  usdc: "0xEFe0D421fD473564c9C9b0cDCeB194cF476D6AF5",          // predeployed real USDC bytecode (6 decimals)
+  stateFile: ".anonai-state.json",
+  maxFeePerGasGwei: "2",
+  legacyGasPriceGwei: "0.002",
+  deployGasLimit: 6000000,
+  stakeEth: "0.012",
+  unstakeDelaySec: 86400,
+  txTimeoutSec: 120,
+}
