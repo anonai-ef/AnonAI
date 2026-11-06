@@ -26,13 +26,22 @@ export class ActError extends Error {
   }
 }
 
+/** Progress events, for the CLI's log and the runner's live stream. */
+export type ActEvent =
+  | { type: "sync"; members: number; epoch: string; generation: number }
+  | { type: "proving"; mode: "zk" | "key" }
+  | { type: "proved"; ms: number; nullifier: string; root: string }
+  | { type: "key"; index: number; address: string }
+  | { type: "built"; hash: string; frames: number; nonceKey: string };
+export type OnEvent = (e: ActEvent) => void;
+
 /** Has this (sender, nonce key) already been consumed on chain? The NONCE_MANAGER predeploy keeps the next seq. */
 export async function nonceKeyUsed(sender: Address, key: bigint): Promise<boolean> {
   const v = await storage(loadConfig().nonceManager, keyedNonceSlot(sender, key));
   return !!v && BigInt(v) !== 0n;
 }
 
-export async function buildActionTx(agentName: string, action: Action): Promise<{ tx: FrameTx; note: Record<string, unknown>; commit: () => void }> {
+export async function buildActionTx(agentName: string, action: Action, onEvent: OnEvent = () => {}): Promise<{ tx: FrameTx; note: Record<string, unknown>; commit: () => void }> {
   const cfg = loadConfig();
   const rec = readState().agents[agentName];
   if (!rec) throw new ActError("UNKNOWN_AGENT", `unknown agent ${agentName}`);
@@ -44,18 +53,23 @@ export async function buildActionTx(agentName: string, action: Action): Promise<
   if (rec.mode === "zk") {
     const ref = await ks.currentReference(policyClass);
     const members = await ks.members(policyClass);
+    onEvent({ type: "sync", members: members.filter((m) => m !== 0n).length, epoch: ref.seq.toString(), generation: ref.generation });
     if (!members.includes(BigInt(rec.commitment!))) {
       throw new ActError("NOT_A_MEMBER", `agent ${agentName} is not a member of class ${rec.policyName} any more (revoked): no proof can be built`);
     }
     const message = actionMessage({ chainId: BigInt(cfg.chainId), account, policyClass, target: action.target, value: action.value, data: action.data });
     log(`zk: ${members.filter((m) => m !== 0n).length} members in class, root epoch ${ref.seq} (gen ${ref.generation}), proving…`);
+    onEvent({ type: "proving", mode: "zk" });
     const t0 = Date.now();
     const proof = await proveMembership({ secret: rec.secret, members, message, scope: ref.seq });
-    log(`proof in ${Date.now() - t0} ms; nullifier ${proof.nullifier.toString(16).slice(0, 12)}…`);
+    const ms = Date.now() - t0;
+    log(`proof in ${ms} ms; nullifier ${proof.nullifier.toString(16).slice(0, 12)}…`);
+    onEvent({ type: "proved", ms, nullifier: `0x${proof.nullifier.toString(16)}`, root: ref.recentRoot.root });
     if (await nonceKeyUsed(account, proof.nullifier)) {
       throw new ActError("EPOCH_USED", `agent ${agentName} already acted in epoch ${ref.seq}: its nullifier (nonce key) is consumed; wait for the next heartbeat`);
     }
     const tx = buildZkTx({ account, paymaster, policy, proof, action, recentRoot: ref.recentRoot });
+    onEvent({ type: "built", hash: txHash(tx), frames: tx.frames.length, nonceKey: `0x${proof.nullifier.toString(16)}` });
     return { tx, note: { mode: "zk", epoch: ref.seq.toString(), nullifier: `0x${proof.nullifier.toString(16)}`, root: ref.recentRoot.root, slot: ref.recentRoot.slot.toString() }, commit: () => {} };
   }
 
@@ -69,17 +83,21 @@ export async function buildActionTx(agentName: string, action: Action): Promise<
     throw new ActError("EPOCH_USED", `one-time key #${k.index} was already used; the key counter is out of sync`);
   }
   log(`key: one-time key #${k.index} ${k.address}`);
+  onEvent({ type: "proving", mode: "key" });
+  onEvent({ type: "key", index: k.index, address: k.address });
   const tx = await buildKeyTx({ account, paymaster, policy, oneTimeKey: k.privateKey, oneTimeAddress: k.address, action });
+  onEvent({ type: "built", hash: txHash(tx), frames: tx.frames.length, nonceKey: k.address });
   return { tx, note: { mode: "key", oneTimeKey: k.index, signer: k.address }, commit: () => writeState((s) => void (s.agents[agentName].used = used + 1)) };
 }
 
 /** Sends a built transaction to the alt-mempool and waits for it; returns the demo-friendly summary. */
-export async function submitAndWait(tx: FrameTx, note: Record<string, unknown>, to?: Address) {
+export async function submitAndWait(tx: FrameTx, note: Record<string, unknown>, to?: Address, onSubmitted: (hash: Hex) => void = () => {}) {
   const cfg = loadConfig();
   const account = requireDeployment("account");
   const before = to ? await wethBalance(to) : undefined;
   const h = await sendToAltMempool(tx);
   writeState((s) => (s.lastTx = h as Hex));
+  onSubmitted(h);
   log(`admitted by the standard alt-mempool: ${h}; waiting for inclusion…`);
   const r = await waitMined(h);
   const frames = (r.frameReceipts ?? []).map((f: any) => f.status).join(",");
@@ -90,8 +108,8 @@ export async function submitAndWait(tx: FrameTx, note: Record<string, unknown>, 
   };
 }
 
-const serialize = (v: unknown) => JSON.stringify(v, (_k, x) => (typeof x === "bigint" ? `0x${x.toString(16)}` : x), 2);
-const revive = (s: string): FrameTx =>
+export const serializeTx = (v: unknown) => JSON.stringify(v, (_k, x) => (typeof x === "bigint" ? `0x${x.toString(16)}` : x), 2);
+export const reviveTx = (s: string): FrameTx =>
   JSON.parse(s, (k, v) => (typeof v === "string" && /^0x[0-9a-f]*$/i.test(v) && ["chainId", "nonceSeq", "value", "execution", "state", "maxFeePerGas", "maxPriorityFeePerGas", "maxFeePerBlobGas", "slot"].includes(k) ? BigInt(v) : k === "nonceKeys" ? (v as string[]).map(BigInt) : v));
 
 async function main() {
@@ -100,7 +118,7 @@ async function main() {
 
   if (args[0] === "--send-prepared") {
     const { tx, note } = JSON.parse(fs.readFileSync(args[1], "utf8"));
-    const revived = revive(JSON.stringify(tx));
+    const revived = reviveTx(JSON.stringify(tx));
     log(`sending prepared tx ${txHash(revived)} ${JSON.stringify(note)}`);
     console.log(JSON.stringify(await submitAndWait(revived, note)));
     return;
@@ -116,7 +134,7 @@ async function main() {
   const prep = args.indexOf("--prepare");
   if (prep >= 0) {
     const file = args[prep + 1];
-    fs.writeFileSync(file, serialize({ tx, note, wire: toWire(tx) }) + "\n");
+    fs.writeFileSync(file, serializeTx({ tx, note, wire: toWire(tx) }) + "\n");
     commit();
     console.log(JSON.stringify({ prepared: file, hash: txHash(tx), ...note }));
     return;
