@@ -6,6 +6,8 @@ libs = ["lib"]
 solc_version = "0.8.28"
 via_ir = true
 evm_version = "cancun"
+# tests call the TypeScript prover (scripts/prove.ts) to produce real Semaphore proofs
+ffi = true
 remappings = [
   "@forshtat/hegota-support/=../node_modules/@forshtat/hegota-support/",
   "@semaphore-protocol/contracts/=../node_modules/@semaphore-protocol/contracts/",
