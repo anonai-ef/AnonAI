@@ -70,6 +70,17 @@ contract BudgetPaymasterTest is HegotaMocks {
         assertFalse(_pay());
     }
 
+    function test_adminPathApprovesBothScopesForAdminOnly() public {
+        mockSigner(address(pm), address(this));
+        vm.expectEmit(address(pm));
+        emit Approved(3);
+        (bool ok,) = address(pm).call(hex"01");
+        assertTrue(ok);
+        mockSigner(address(pm), stranger);
+        (ok,) = address(pm).call(hex"01");
+        assertFalse(ok);
+    }
+
     function test_onlyAdminWithdraws() public {
         vm.prank(stranger);
         vm.expectRevert();

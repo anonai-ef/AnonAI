@@ -33,9 +33,9 @@ export async function waitMined(hash: Hex): Promise<any> {
 }
 
 /** Deploys creation bytecode with a legacy tx from `key`. `value` funds the contract through CREATE (a later transfer would hit its fallback). */
-export async function deploy(key: Hex, bytecode: Hex, value = 0n): Promise<Address> {
+export async function deploy(key: Hex, bytecode: Hex, value = 0n, gas?: bigint): Promise<Address> {
   const w = walletClient(key);
-  const hash = await w.sendTransaction({ data: bytecode, value, gas: cfg().deployGasLimit, gasPrice: cfg().legacyGasPriceWei });
+  const hash = await w.sendTransaction({ data: bytecode, value, gas: gas ?? cfg().deployGasLimit, gasPrice: cfg().legacyGasPriceWei });
   const r = await waitMined(hash);
   if (r.status !== "0x1" || !r.contractAddress) throw new Error(`DEPLOY_FAILED: ${hash}`);
   return r.contractAddress as Address;

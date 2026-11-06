@@ -14,12 +14,19 @@ export interface Config {
   recentRootAddress: Address;
   nonceManager: Address;
   usdc: Address;
+  weth: Address;
+  deterministicProxy: Address;
+  poseidonT3: Address;
   stateFile: string;
   maxFeePerGasWei: bigint;
   legacyGasPriceWei: bigint;
   deployGasLimit: bigint;
+  heavyDeployGasLimit: bigint;
   stakeWei: bigint;
   unstakeDelaySec: number;
+  accountFundingWei: bigint;
+  paymasterFundingWei: bigint;
+  epochBlocks: number;
   txTimeoutSec: number;
 }
 
@@ -47,12 +54,19 @@ export function loadConfig(): Config {
     recentRootAddress: addr("recentRootAddress"),
     nonceManager: addr("nonceManager"),
     usdc: addr("usdc"),
+    weth: addr("weth"),
+    deterministicProxy: addr("deterministicProxy"),
+    poseidonT3: addr("poseidonT3"),
     stateFile: path.join(repoRoot, str("stateFile")),
     maxFeePerGasWei: parseGwei(str("maxFeePerGasGwei")),
     legacyGasPriceWei: parseGwei(str("legacyGasPriceGwei")),
     deployGasLimit: BigInt(num("deployGasLimit")),
+    heavyDeployGasLimit: BigInt(num("heavyDeployGasLimit")),
     stakeWei: parseEther(str("stakeEth")),
     unstakeDelaySec: num("unstakeDelaySec"),
+    accountFundingWei: parseEther(str("accountFundingEth")),
+    paymasterFundingWei: parseEther(str("paymasterFundingEth")),
+    epochBlocks: num("epochBlocks"),
     txTimeoutSec: num("txTimeoutSec"),
   };
   return cached;

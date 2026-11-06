@@ -3,7 +3,7 @@ pragma solidity ^0.8.24;
 
 import {HegotaSupport} from "@forshtat/hegota-support/contracts/HegotaSupport.sol";
 import {Devnet} from "@forshtat/hegota-support/contracts/Devnet.sol";
-import {FrameParam, Scope, TxParam} from "@forshtat/hegota-support/contracts/Params.sol";
+import {FrameParam, Scope, SigParam, TxParam} from "@forshtat/hegota-support/contracts/Params.sol";
 
 /// Stateful paymaster for AnonAI: pays gas for the shared account out of per-policy-class budgets.
 ///
@@ -48,7 +48,14 @@ contract BudgetPaymaster is HegotaSupport(Devnet.ERC8421_WORKSHOP) {
     /// Frames land here. The frame's data is the calldata.
     fallback() external payable {
         if (msg.data.length == 32) _preVerify(abi.decode(msg.data, (bytes32)));
+        else if (msg.data.length == 1) _admin();
         else _pay();
+    }
+
+    /// Admin self-relay (used once, to stake this paymaster): the tx carries a SECP256K1 signature by the admin.
+    function _admin() internal {
+        require(address(uint160(sigparam(0, SigParam.RESOLVED_SIGNER))) == admin, "AnonAI: not admin");
+        approve(Scope.EXECUTION_AND_PAYMENT);
     }
 
     function _preVerify(bytes32 policyClass) internal {

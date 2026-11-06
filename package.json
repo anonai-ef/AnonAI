@@ -12,7 +12,8 @@
     "typecheck": "tsc --noEmit",
     "build:contracts": "forge build --root contracts && node scripts/export-artifacts.mjs",
     "test:contracts": "forge test --root contracts",
-    "mcp": "tsx src/mcp/server.ts"
+    "mcp": "tsx src/mcp/server.ts",
+    "setup": "tsx src/cli/setup.ts"
   },
   "dependencies": {
     "@forshtat/hegota-support": "0.0.1",

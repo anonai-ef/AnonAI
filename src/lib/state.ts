@@ -6,19 +6,21 @@ import { loadConfig } from "./config.js";
 
 export interface AgentRecord {
   name: string;
-  /** Root secret of the agent; one-time keys are derived from it. Devnet only. */
-  secret: Hex;
+  mode: "zk" | "key";
+  /** Secret of the agent: the Semaphore identity seed (zk) or the one-time key seed (key). Devnet only. */
+  secret: string;
+  policyName: string;
   policyClass: Hex;
-  /** How many one-time keys were registered for it, and how many are used. */
-  keys: number;
-  used: number;
-  /** Leaf index of its first key in the keystore tree; keys follow in order. */
-  leafStart: number;
+  /** zk: the identity commitment registered in the class. */
+  commitment?: string;
+  /** key: how many one-time keys were registered, and how many are used. */
+  keys?: number;
+  used?: number;
 }
 
 export interface State {
   operatorKey?: Hex;
-  deployments: Partial<{ paymaster: Address; keystore: Address; account: Address }>;
+  deployments: Partial<{ verifier: Address; paymaster: Address; keystore: Address; account: Address }>;
   agents: Record<string, AgentRecord>;
   lastTx?: Hex;
 }
