@@ -11,6 +11,7 @@ export const LIMITS = {
   verifyZk: 600_000n,
   verifyKey: 250_000n,
   preVerify: 150_000n,
+  preVerifyState: 100_000n, // the charge receipt is a new storage slot: state gas on this devnet
   pay: 150_000n,
   body: 120_000n,
   bodyState: 200_000n,
@@ -64,7 +65,7 @@ export function encodeKeyAuth(policy: Policy): Hex {
 function frames(a: { account: Address; paymaster: Address; policy: Policy; auth: Hex; verifyLimit: bigint; action: Action }) {
   return [
     verifyFrame("EXECUTION", null, a.verifyLimit, { data: a.auth }),
-    preVerifyFrame(a.paymaster, LIMITS.preVerify, { data: policyClassOf(a.policy) }),
+    preVerifyFrame(a.paymaster, LIMITS.preVerify, { data: policyClassOf(a.policy), state: LIMITS.preVerifyState }),
     verifyFrame("PAYMENT", a.paymaster, LIMITS.pay),
     senderFrame(a.action.target, LIMITS.body, { value: a.action.value, data: a.action.data, state: LIMITS.bodyState }),
   ];

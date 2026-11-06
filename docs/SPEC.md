@@ -23,7 +23,7 @@ alt-mempool** (the ERC-8421 rule set the sidecar implements), **staked entity**,
 | D5 | **One Semaphore group (LeanIMT) per policy class.** The proof's root reveals the class; budgets are keyed by class. | A single tree cannot bind an identity commitment to a policy. Anonymity set = members of the class. Owners choose from a small catalogue of classes so classes are shared. |
 | D6 | **Revocation = remove the leaf and bump the class `generation`.** The account requires the proof's root to belong to the current generation. | Old roots stay valid inside a generation (so pending transactions are not invalidated by routine registrations), but a revocation invalidates every older root at once. Revocation is immediate at the next block. |
 | D7 | **Anon-RPC is out of scope for v1.** The read path is a plain RPC to ethrex. | No Node harness exists (only `@anon-rpc/browser-harness`, iframe + Web Worker + WebRTC). Revisit only if everything else is done. |
-| D8 | **Paymaster budgets are charged in a `pre_verify` frame with `TXPARAM(MAX_COST)`; the `pay` frame checks the pre_verify status and a transient flag.** | Already built and unit-tested (`contracts/src/BudgetPaymaster.sol`). |
+| D8 | **Paymaster budgets are charged in a `pre_verify` frame with `TXPARAM(MAX_COST)`; the `pay` frame requires a charge receipt stored under `TXPARAM(SIG_HASH)` by this transaction's own pre_verify.** | Probed on the devnet (`yarn probe`): `FRAMEPARAM(…, STATUS)` faults on this ethrex build and transient storage does not survive from frame 1 to frame 2, so the status check ERC-8421 describes cannot be done here. The receipt is strictly stronger: payment is approved only if this very transaction charged a budget. `SIG_HASH`, `SENDER`, `MAX_COST`, `FRAME_COUNT`, `CURRENT_FRAME_INDEX`, `NONCE_KEY_COUNT/0` and the body-frame `FRAMEPARAM`s all work. |
 | D9 | **Both the shared account and the paymaster stake 0.012 ETH** at the NaiveStakingRegistry. | A staked entity may read any storage of non-entity contracts (STORAGE-032) and its own storage as payer (STORAGE-031). The account needs a `view` call into the Keystore and the verifier; the paymaster needs its own budget table. |
 | D10 | **Submission only through the public gateway's `eth_sendFrameTransaction`.** Never `ethrex_submitPrivilegedFrameTransaction`, never the genesis key, never `debug_*`. | Operator guidance: private submission is "not CROPS"; privileged use of the public ethrex is at our own risk. |
 | D11 | **Fallback if the gateway's precompile allowlist is not fixed in time: a local sidecar with the single config change `precompiles = [0x01..0x0a]`.** | Live `skandha_config` still returns `precompiles: []`, so the sidecar's code-access rule refuses `STATICCALL` to `0x06/0x07/0x08` as "un-deployed contract". The operator said a documented config-only change is acceptable for judging and offered to fix the public node. Ask in the Telegram group first (section 13). |
@@ -305,9 +305,9 @@ agent are still unlinkable to each other.
 
 ### 6.2 BudgetPaymaster (built, `contracts/src/BudgetPaymaster.sol`)
 
-- `fallback`: 32-byte data → pre_verify; empty data → pay; 1-byte data → admin self-stake path (to add).
-- pre_verify: `TXPARAM(SENDER) == account`, `budget[class] >= TXPARAM(MAX_COST)`, subtract, `tstore`.
-- pay: `TXPARAM(CURRENT_FRAME_INDEX) = i`, `FRAMEPARAM(i-1, STATUS) == 1`, `tload == 1`, `APPROVE(PAYMENT)`.
+- `fallback`: 32-byte data → pre_verify; empty data → pay; 1-byte data → admin self-stake path.
+- pre_verify: `TXPARAM(SENDER) == account`, no receipt yet for `TXPARAM(SIG_HASH)`, `budget[class] >= TXPARAM(MAX_COST)`, subtract, `charged[sigHash] = class`.
+- pay: `charged[TXPARAM(SIG_HASH)] != 0`, `APPROVE(PAYMENT)`. (See D8 for why not `FRAMEPARAM STATUS`.)
 - Reads/writes only its own storage: allowed because it is staked (STORAGE-031). Budgets are keyed by
   class, so its storage names no owner.
 
