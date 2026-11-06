@@ -445,7 +445,13 @@ Rules:
 
 ---
 
-## 11. Demo script (3 minutes, one screen split three ways: Claude chat, terminal with MCP logs, explorer)
+## 11. Demo script (3 minutes, one screen split three ways: Claude chat, terminal with MCP logs, dashboard/explorer)
+
+Rehearsed live on 2026-11-06 with the CLI (`yarn act`, `yarn agent`): every step below has been exercised
+on the public devnet. The asset is WETH (the USDC predeploy's deployer key is off limits). For step 7 use
+`yarn act <agent> <to> <amt> --prepare f.json` before the revocation and `yarn act --send-prepared f.json`
+after it: a revoked agent cannot build a new proof at all (the runtime reports `NOT_A_MEMBER`), so the
+on-chain generation check is shown with a proof prepared earlier.
 
 1. **Owner registers two agents** (0:00–0:30): `agent new alice --class usdc-10`, `agent new bob --class usdc-10`. Explorer shows the two Keystore txs and the root commit to `0x…8272`.
 2. **Claude reads before acting** (0:30–0:50): "What is the treasury's USDC balance? Pay the supplier 5 USDC." Claude calls `anonai_read`, then `anonai_act`.

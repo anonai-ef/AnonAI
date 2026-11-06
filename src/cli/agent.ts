@@ -80,6 +80,14 @@ async function main() {
 
   if (cmd === "heartbeat") {
     const { policyClass } = policyByName(a1);
+    const last = await ks.lastCommitBlock(policyClass);
+    const epochBlocks = await ks.epochBlocks();
+    const head = await publicClient().getBlockNumber();
+    if (head < last + epochBlocks) {
+      const wait = Number(last + epochBlocks - head);
+      log(`too soon: the class committed a root at block ${last}; next heartbeat allowed at block ${last + epochBlocks} (${wait} blocks, ~${wait * 6}s). Waiting…`);
+      await new Promise((r) => setTimeout(r, (wait + 1) * 6000));
+    }
     const r = await ks.heartbeat(opKey, policyClass);
     log(`heartbeat for ${a1}: epoch ${r.seq} (tx ${r.txHash})`);
     return;
