@@ -1,41 +1,31 @@
-# Builds the dashboard in web/ and publishes it to GitHub Pages on every push to main.
-# Enable Pages in the repository settings (Source: GitHub Actions) once; the site then lives at
-# https://<user>.github.io/<repo>/ . The Vite base is "./", so no path configuration is needed.
+# Builds the dashboard in web/ and publishes web/dist to the gh-pages branch on every push to main.
+# GitHub serves a public repo's gh-pages branch at https://<user>.github.io/<repo>/ without any settings change;
+# if the site does not appear within a few minutes, set Settings → Pages → Source to "Deploy from a branch",
+# branch gh-pages, folder / (root). The Vite base is "./", so no path configuration is needed.
 name: dashboard
 on:
   push:
     branches: [main]
   workflow_dispatch:
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write
 concurrency:
   group: pages
   cancel-in-progress: true
 jobs:
-  build:
+  build-and-publish:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      # Enables GitHub Pages (source: GitHub Actions) on first run, so the deploy job does not fail with 404.
-      - uses: actions/configure-pages@v5
-        with:
-          enablement: true
       - uses: actions/setup-node@v4
         with:
           node-version: 22
       - run: corepack enable && yarn --cwd web install --frozen-lockfile
       - run: yarn --cwd web build
-      - uses: actions/upload-pages-artifact@v3
+      - run: touch web/dist/.nojekyll
+      - uses: peaceiris/actions-gh-pages@v4
         with:
-          path: web/dist
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - id: deployment
-        uses: actions/deploy-pages@v4
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: web/dist
+          publish_branch: gh-pages
+          force_orphan: true
