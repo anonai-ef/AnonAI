@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "anonai": {
+      "command": "../node_modules/.bin/tsx",
+      "args": ["../src/mcp/server.ts", "--agent", "alice"]
+    }
+  }
+}

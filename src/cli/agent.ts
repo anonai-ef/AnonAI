@@ -12,8 +12,8 @@ import { loadConfig } from "../lib/config.js";
 import { artifact } from "../lib/contracts.js";
 import { leafOfAddress, oneTimeKeys } from "../lib/keys.js";
 import { KeystoreClient } from "../lib/keystoreClient.js";
-import { policyByName, policyCatalogue, policyClassOf } from "../lib/policies.js";
-import { commitmentOf, siblingsOf } from "../lib/semaphore.js";
+import { policyByName, policyCatalogue } from "../lib/policies.js";
+import { commitmentOf, policyClassOf, siblingsOf } from "../lib/semaphore.js";
 import { operatorKey, readState, requireDeployment, writeState } from "../lib/state.js";
 import { wethBalance, wrapAndSend } from "../lib/weth.js";
 
