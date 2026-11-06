@@ -384,10 +384,13 @@ Views: `members(class)`, `rootInfo(class, root)`, `generation(class)`, `rootSeq(
 
 | Frame | Estimate | Limit to set |
 |---|---|---|
-| 0 only_verify | verifier ≈ 230k, helpers ≈ 40k, Keystore call ≈ 8k, hashing ≈ 5k → ≈ 290k | 400k |
-| 1 pre_verify | ≈ 35k | 60k |
-| 2 pay | ≈ 20k | 40k |
-| 3 body (USDC transfer) | ≈ 60k + state gas | 120k exec, 200k state |
+| 0 only_verify, zk mode | **measured 296,823** (block 4086) | 400k |
+| 0 only_verify, key mode | **measured 53,591** (block 4074) | 120k |
+| 1 pre_verify | **measured 42,127** | 80k exec, 100k state (the receipt is a new slot) |
+| 2 pay | **measured 27,437** | 60k |
+| 3 body (WETH transfer) | **measured 30,262** | 120k exec, 200k state |
+
+Whole transaction: 522,487 gas in zk mode, 370,109 in key mode. Proof generation: ~300 ms at depth 10 with cached artifacts (first run downloads ~4 MB).
 
 ### 8.4 Reputation hygiene
 

@@ -8,12 +8,12 @@ export const MODE_KEY = 2n;
 
 /** Frame gas limits; measured on the devnet before the demo (docs/SPEC.md 8.3). */
 export const LIMITS = {
-  verifyZk: 600_000n,
-  verifyKey: 250_000n,
-  preVerify: 150_000n,
+  verifyZk: 400_000n, // measured 296,823 (depth-10 Groth16 + checks)
+  verifyKey: 120_000n, // measured 53,591
+  preVerify: 80_000n, // measured 42,127
   preVerifyState: 100_000n, // the charge receipt is a new storage slot: state gas on this devnet
-  pay: 150_000n,
-  body: 120_000n,
+  pay: 60_000n, // measured 27,437
+  body: 120_000n, // WETH transfer measured 30,262
   bodyState: 200_000n,
 };
 
