@@ -51,12 +51,11 @@ export function StoryView({ f }: { f: Facts }) {
             <div className="beat-copy">
               <p className="kicker">The problem</p>
               <h1>Every AI agent on Ethereum today is a <em>CROPS</em> liability.</h1>
-              <p className="sub">A hot key on a server, ETH to pay its own gas, one public address. Measured against Ethereum's own mandate, it fails every letter.</p>
               <ul className="crops bad">
-                <li><span className="ltr">C</span><div><strong>Censorship resistance</strong><span>One address is trivially blacklisted: at the RPC, at the relay, in the contract.</span></div></li>
-                <li><span className="ltr">O</span><div><strong>Open source</strong><span>Agent wallets ship as hosted key-custody services you cannot run yourself.</span></div></li>
-                <li><span className="ltr">P</span><div><strong>Privacy</strong><span>Every trade, payment and read is traced to the owner.</span></div></li>
-                <li><span className="ltr">S</span><div><strong>Security</strong><span>One prompt injection or leaked env var and the funded key is gone.</span></div></li>
+                <li><span className="ltr">C</span><div><strong>Censorship resistance</strong><span>One address. Trivially blacklisted.</span></div></li>
+                <li><span className="ltr">O</span><div><strong>Open source</strong><span>Hosted key custody you can't run.</span></div></li>
+                <li><span className="ltr">P</span><div><strong>Privacy</strong><span>Every action traced to the owner.</span></div></li>
+                <li><span className="ltr">S</span><div><strong>Security</strong><span>A funded hot key on a server.</span></div></li>
               </ul>
             </div>
             <TxCard variant="today" />
@@ -68,12 +67,11 @@ export function StoryView({ f }: { f: Facts }) {
             <div className="beat-copy">
               <p className="kicker">The idea</p>
               <h1>Replace the key with a <em>proof</em>, the balance with a <em>budget</em>, the address with a <em>crowd</em>.</h1>
-              <p className="sub">The owner registers the agent as a hidden commitment. The agent proves it is one of the registered, binds the proof to this exact action, and sends from an account every agent shares. A paymaster pays.</p>
               <ul className="crops good">
-                <li><span className="ltr">C</span><div><strong>Censorship resistance</strong><span>Nothing to blacklist: one shared sender, a public mempool, a proof anyone can verify.</span></div></li>
-                <li><span className="ltr">O</span><div><strong>Open source</strong><span>MIT. Redeploy the three contracts from the repo; no server of ours in the path.</span></div></li>
-                <li><span className="ltr">P</span><div><strong>Privacy</strong><span>The chain sees a proof, a nullifier, a policy class. No agent, no owner.</span></div></li>
-                <li><span className="ltr">S</span><div><strong>Security</strong><span>No hot key, no ETH on the agent, a policy it cannot exceed, revoked in one transaction.</span></div></li>
+                <li><span className="ltr">C</span><div><strong>Censorship resistance</strong><span>No address to blacklist. Public mempool.</span></div></li>
+                <li><span className="ltr">O</span><div><strong>Open source</strong><span>MIT. Redeploy from the repo.</span></div></li>
+                <li><span className="ltr">P</span><div><strong>Privacy</strong><span>A proof, a nullifier, a class. No names.</span></div></li>
+                <li><span className="ltr">S</span><div><strong>Security</strong><span>No key. No ETH. Policy-bound. Revocable.</span></div></li>
               </ul>
             </div>
             <TxCard variant="anonai" animate />
@@ -85,23 +83,22 @@ export function StoryView({ f }: { f: Facts }) {
             <div className="beat-copy">
               <p className="kicker">How it works</p>
               <h1>Three parties. One transaction.</h1>
-              <p className="sub">Built on EIP-8141 frame transactions: four frames, each with its own job.</p>
             </div>
             <ol className="flow">
               <li>
                 <span className="n">1</span>
                 <strong>Owner registers</strong>
-                <span>A Semaphore commitment goes into the Keystore's class tree. The root is committed to the recent-root predeploy. One transaction to add, one to revoke.</span>
+                <span>A hidden commitment in the Keystore. One tx to add, one to revoke.</span>
               </li>
               <li>
                 <span className="n">2</span>
                 <strong>Agent proves</strong>
-                <span>A Groth16 membership proof, bound to the call it is about to make. Its nullifier becomes the transaction's nonce key: one action per epoch, enforced by the chain.</span>
+                <span>Membership, bound to this exact call. Nullifier = nonce key.</span>
               </li>
               <li>
                 <span className="n">3</span>
-                <strong>Mempool admits, chain executes</strong>
-                <span>Frame 0 verifies the proof and the policy. The paymaster charges its budget and approves payment. The shared account makes the call.</span>
+                <strong>Chain executes</strong>
+                <span>Alt-mempool admits. Shared account acts. Paymaster pays.</span>
               </li>
             </ol>
           </>
@@ -112,14 +109,14 @@ export function StoryView({ f }: { f: Facts }) {
             <div className="beat-copy">
               <p className="kicker">Why it needs the alt-mempool</p>
               <h1>Too heavy and too stateful for the canonical mempool.</h1>
-              <p className="sub">Same bytes, two mempools. We send both in the demo.</p>
+              <p className="sub">Same bytes, two mempools.</p>
             </div>
             <div className="compare">
               <div className="side bad">
                 <p className="h">Canonical mempool · EIP-8141</p>
                 <ul>
-                  <li>100,000 gas validation cap</li>
-                  <li>sender's own storage only</li>
+                  <li>100k gas cap</li>
+                  <li>own storage only</li>
                   <li>no stateful paymaster</li>
                 </ul>
                 <p className="verdict">rejected</p>
@@ -127,14 +124,14 @@ export function StoryView({ f }: { f: Facts }) {
               <div className="side good">
                 <p className="h">Standard alt-mempool · ERC-8421</p>
                 <ul>
-                  <li>296,823 gas to verify the proof</li>
-                  <li>staked account reads the Keystore</li>
-                  <li>pre_verify charges the budget</li>
+                  <li>297k gas proof check</li>
+                  <li>staked reads of the Keystore</li>
+                  <li>pre_verify budget charge</li>
                 </ul>
                 <p className="verdict">included</p>
               </div>
             </div>
-            <p className="footline">Claude drives it through MCP · the dashboard reads through Anon-RPC · proof in 300 ms · live on the devnet · <a href={f.explorerUrl} target="_blank" rel="noreferrer">explorer ↗</a></p>
+            <p className="footline">Claude via MCP · reads via Anon-RPC · 300 ms proof · live on the devnet · <a href={f.explorerUrl} target="_blank" rel="noreferrer">explorer ↗</a></p>
           </>
         )}
       </section>
