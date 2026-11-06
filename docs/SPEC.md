@@ -27,6 +27,7 @@ alt-mempool** (the ERC-8421 rule set the sidecar implements), **staked entity**,
 | D9 | **Both the shared account and the paymaster stake 0.012 ETH** at the NaiveStakingRegistry. | A staked entity may read any storage of non-entity contracts (STORAGE-032) and its own storage as payer (STORAGE-031). The account needs a `view` call into the Keystore and the verifier; the paymaster needs its own budget table. |
 | D10 | **Submission only through the public gateway's `eth_sendFrameTransaction`.** Never `ethrex_submitPrivilegedFrameTransaction`, never the genesis key, never `debug_*`. | Operator guidance: private submission is "not CROPS"; privileged use of the public ethrex is at our own risk. |
 | D11 | **Fallback if the gateway's precompile allowlist is not fixed in time: a local sidecar with the single config change `precompiles = [0x01..0x0a]`.** | Live `skandha_config` still returns `precompiles: []`, so the sidecar's code-access rule refuses `STATICCALL` to `0x06/0x07/0x08` as "un-deployed contract". The operator said a documented config-only change is acceptable for judging and offered to fix the public node. Ask in the Telegram group first (section 13). |
+| D12 | **The shared account is dual-mode, chosen per transaction: `zk` (D1) or `key`.** In key mode the agent signs with a fresh one-time secp256k1 key (scheme 1, verified by the protocol); the account checks `Keystore.isMember(class, signerAddress)` and that the address is the single nonce key. Same policy checks, same paymaster, same Keystore (one-time addresses are leaves in the class tree like commitments). | Requested as an option. It is the no-precompile fallback that runs on the public gateway today (~60k validation gas), and a live A/B for the demo: key mode reveals the one-time key, so registration links the action to the owner; zk mode does not. The Keystore's Merkle tree and recent-root commits are shared; key mode checks membership against the Keystore set directly rather than recomputing a Poseidon path on chain (which would cost more than the proof). |
 
 ---
 
@@ -289,6 +290,19 @@ read-only, allowed because the account is staked) and to the verifier (pure code
 What the protocol enforces for us: the ARBITRARY signature (nothing), the nonce key's single use, the
 declared recent-root reference being committed and inside the window, the payer's solvency.
 
+### 6.1b SharedAccount, key mode (`mode = 2`, `msg.data = abi.encode(2, abi.encode(KeyAuth{policy}))`)
+
+The transaction carries one SECP256K1 signature entry whose signer is a one-time key the owner registered
+(its address is a leaf in the class tree, inserted by the same `register`). The protocol verifies the
+signature; the frame reads `SIGPARAM(0, RESOLVED_SIGNER)`, runs the same frame-layout, policy, paymaster
+class and nonce-key checks as zk mode with `nonceKey = uint256(signer)`, then requires
+`Keystore.isMember(class, signer)`. One key, one action: the owner registers a batch of addresses per
+agent (derived from the agent secret: `privKey_i = keccak256(secret ‖ i)`) and the runtime uses the next
+unused one. Revocation removes the leaf, which flips `isMember` immediately. About 60k validation gas,
+no precompiles, so it runs on the public gateway as configured today. Privacy: the one-time address is
+visible, so an observer who joins registrations to actions learns the registrant; actions by the same
+agent are still unlinkable to each other.
+
 ### 6.2 BudgetPaymaster (built, `contracts/src/BudgetPaymaster.sol`)
 
 - `fallback`: 32-byte data → pre_verify; empty data → pay; 1-byte data → admin self-stake path (to add).
@@ -330,6 +344,10 @@ Views: `members(class)`, `rootInfo(class, root)`, `generation(class)`, `rootSeq(
   Merkle-only design could not offer).
 - **Unlinkability of actions**: nullifiers differ per root, messages differ per action. Two actions
   by the same agent on different roots are unlinkable to each other and to the agent.
+- **Key mode is weaker by design**: it reveals the one-time address, so registration links each action
+  to the owner (not to other actions). The demo shows both modes side by side to make the difference
+  concrete: same sender, same payer, same shape; in zk mode an ARBITRARY signature and a nullifier, in
+  key mode a fresh signer address that appears exactly once in a Keystore registration.
 - **What remains visible**: the policy class per action (mitigated by shared classes), the action
   itself (the body is a normal call), the submitting IP at the gateway (Anon-RPC would hide the read
   side; private submission is unsupported), and timing.
