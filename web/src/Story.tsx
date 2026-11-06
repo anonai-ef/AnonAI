@@ -50,11 +50,13 @@ export function StoryView({ f }: { f: Facts }) {
           <>
             <div className="beat-copy">
               <p className="kicker">The problem</p>
-              <h1>Every AI agent on Ethereum today is a liability.</h1>
-              <ul className="points">
-                <li><span className="ico">⚿</span><div><strong>It holds a private key on a server.</strong><span>One prompt injection, one leaked env var, and the key is gone.</span></div></li>
-                <li><span className="ico">Ξ</span><div><strong>It holds ETH for gas.</strong><span>Every agent address is a funded honeypot.</span></div></li>
-                <li><span className="ico">◎</span><div><strong>It acts from one public address.</strong><span>Every trade, payment and read is traced to its owner.</span></div></li>
+              <h1>Every AI agent on Ethereum today is a <em>CROPS</em> liability.</h1>
+              <p className="sub">A hot key on a server, ETH to pay its own gas, one public address. Measured against Ethereum's own mandate, it fails every letter.</p>
+              <ul className="crops bad">
+                <li><span className="ltr">C</span><div><strong>Censorship resistance</strong><span>One address is trivially blacklisted: at the RPC, at the relay, in the contract.</span></div></li>
+                <li><span className="ltr">O</span><div><strong>Open source</strong><span>Agent wallets ship as hosted key-custody services you cannot run yourself.</span></div></li>
+                <li><span className="ltr">P</span><div><strong>Privacy</strong><span>Every trade, payment and read is traced to the owner.</span></div></li>
+                <li><span className="ltr">S</span><div><strong>Security</strong><span>One prompt injection or leaked env var and the funded key is gone.</span></div></li>
               </ul>
             </div>
             <TxCard variant="today" />
@@ -66,9 +68,13 @@ export function StoryView({ f }: { f: Facts }) {
             <div className="beat-copy">
               <p className="kicker">The idea</p>
               <h1>Replace the key with a <em>proof</em>, the balance with a <em>budget</em>, the address with a <em>crowd</em>.</h1>
-              <p className="sub">
-                The owner registers the agent as a hidden commitment. The agent proves it is one of the registered, binds the proof to this exact action, and sends from an account shared by every agent. A paymaster pays. The chain sees a proof, a nullifier and a policy class. Nothing names the agent or the owner.
-              </p>
+              <p className="sub">The owner registers the agent as a hidden commitment. The agent proves it is one of the registered, binds the proof to this exact action, and sends from an account every agent shares. A paymaster pays.</p>
+              <ul className="crops good">
+                <li><span className="ltr">C</span><div><strong>Censorship resistance</strong><span>Nothing to blacklist: one shared sender, a public mempool, a proof anyone can verify.</span></div></li>
+                <li><span className="ltr">O</span><div><strong>Open source</strong><span>MIT. Redeploy the three contracts from the repo; no server of ours in the path.</span></div></li>
+                <li><span className="ltr">P</span><div><strong>Privacy</strong><span>The chain sees a proof, a nullifier, a policy class. No agent, no owner.</span></div></li>
+                <li><span className="ltr">S</span><div><strong>Security</strong><span>No hot key, no ETH on the agent, a policy it cannot exceed, revoked in one transaction.</span></div></li>
+              </ul>
             </div>
             <TxCard variant="anonai" animate />
           </>

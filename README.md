@@ -240,13 +240,22 @@ Verified with `yarn probe` and live transactions (details and dates in `docs/SPE
 
 ## CROPS
 
-**C** We control the Keystore, SharedAccount and BudgetPaymaster and nothing else; an owner redeploys all
-three from this repo. Transactions go to the public decentralised mempool, never a private endpoint.
-**O** MIT; contracts, prover, runtime, MCP, runner and dashboard build and run from the repo.
-**P** The chain learns a policy class, a nullifier and a root; the sidecar also learns the submitting IP;
-dashboard reads can leave through Anon-RPC. Nothing learns which agent or owner acted. No analytics.
-**S** The operator key signs only Keystore and paymaster transactions; the agent holds one Semaphore
-identity secret bounded by its policy and void after revocation.
+The Ethereum Foundation's 2026 mandate names four properties that have to hold together: censorship
+resistance, open source, privacy, security (Buterin's later reading adds capture resistance). An agent wallet
+as built today fails all four at once: it is one blacklistable address, usually a hosted key-custody service,
+traceable to its owner on every action, and a funded hot key on a server. AnonAI was designed letter by letter
+against that list. Below is what each letter means for an agent, what AnonAI does about it, and where the
+honest limit is.
+
+| | What it means for an agent | What AnonAI does | Honest limit |
+|---|---|---|---|
+| **C** Censorship resistance | No single party can stop this agent from acting. | Every agent sends from one shared account, so there is no per-agent address to blacklist; authorisation is a proof anyone can verify, not a signature a relay can filter by key. Transactions go to the public, gossiped alt-mempool, never to a private endpoint. If this project disappears, an owner redeploys the three contracts from the repo and points agents at them; no server, domain or relayer of ours is in the path. | The shared account itself is an address; a mempool node could refuse it wholesale. Mitigation is the same as for any contract: more nodes, and the owner can deploy another account. |
+| **O** Open source | Anyone can run, inspect and fork the whole stack. | MIT. Contracts, circuits (Semaphore v4, itself open), prover, MCP server, runner and dashboard build from this repository against the public devnet with `yarn setup`. Gas numbers, devnet quirks and design decisions are written down in `docs/SPEC.md`. | Semaphore's Groth16 trusted setup is inherited, not re-run by us. |
+| **P** Privacy | Acting on chain should not reveal which agent, or whose. | The chain learns a policy class, a nullifier and a Merkle root; the signature entry is scheme 0, so there is no public key at all. Actions by one agent are unlinkable across epochs; registrations cannot be joined to actions because the proof hides which leaf produced it. The dashboard's reads can leave through Anon-RPC. No analytics, no trackers. | The policy class is visible (mitigated by shared classes), the action itself is public, and the gateway sidecar sees the submitting IP. Key mode deliberately gives up unlinkability for cost, and the UI says so. |
+| **S** Security | Compromising the agent must not compromise funds or the owner. | The agent holds no ETH and no chain key: a stolen agent host yields one identity secret whose power is bounded by its policy (target, selector, amount cap) and voided by one revocation transaction. The owner's operator key signs only Keystore and paymaster transactions and never appears in an agent's action. Rate limiting is enforced by the protocol (nullifier = nonce key), not by the agent. | Trust assumptions: Semaphore's setup, the verifier contract, the devnet staking registry. The secret still lives on the agent host (the runner); hardware isolation is future work. |
+
+Capture resistance, the fifth reading: no token, no admin key over user funds, no upgradeable proxy. The
+only privileged actions are the owner's over its own agents and budgets.
 
 ## Layout
 

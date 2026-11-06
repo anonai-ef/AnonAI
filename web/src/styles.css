@@ -124,6 +124,16 @@ footer { margin-top: 40px; padding-top: 14px; border-top: 1px solid var(--line);
 .points strong { display: block; font-size: 17px; margin-bottom: 2px; }
 .points span:not(.ico) { color: var(--dim); font-size: 15px; line-height: 1.5; }
 
+.crops { list-style: none; padding: 0; margin: 14px 0 0; display: grid; grid-template-columns: 1fr 1fr; gap: 10px 18px; }
+@media (max-width: 1100px) { .crops { grid-template-columns: 1fr; } }
+.crops li { display: flex; gap: 12px; align-items: flex-start; }
+.crops .ltr { flex: none; width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-family: "IBM Plex Mono", monospace; font-weight: 700; font-size: 16px; }
+.crops.bad .ltr { color: var(--bad); background: rgba(248, 113, 113, 0.12); border: 1px solid rgba(248, 113, 113, 0.35); }
+.crops.good .ltr { color: var(--ok); background: rgba(74, 222, 128, 0.12); border: 1px solid rgba(74, 222, 128, 0.35); }
+.crops strong { display: block; font-size: 15px; margin-bottom: 1px; }
+.crops span:not(.ltr) { color: var(--dim); font-size: 13.5px; line-height: 1.45; }
+.beat .sub + .crops { margin-top: 18px; }
+
 .txcard { background: var(--panel); border: 1px solid var(--line); border-radius: 18px; padding: 8px 8px 10px; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35); }
 .txhead { display: flex; justify-content: space-between; align-items: center; padding: 12px 14px 10px; font-size: 13px; color: var(--dim); text-transform: uppercase; letter-spacing: 0.8px; }
 .badge { padding: 3px 10px; border-radius: 999px; font-size: 12px; text-transform: none; letter-spacing: 0; font-weight: 600; }

@@ -547,7 +547,7 @@ replace the `__$…$__` placeholder in Keystore's creation bytecode (the artifac
 
 ---
 
-## 15. CROPS section (for the README)
+## 15. CROPS section (for the README; the README's version, with a per-letter table and honest limits, is the one to present)
 
 **C**: We control the Keystore, SharedAccount and BudgetPaymaster contracts and nothing else. If we
 disappear, an owner redeploys all three from the repo; no server, domain or relayer of ours is in the
