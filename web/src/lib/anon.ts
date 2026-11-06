@@ -64,7 +64,19 @@ export function enableAnon(network: NetworkId = "tor-js") {
       },
     } as any);
     const w = worker;
-    w.ready.then(() => worker === w && set({ status: "ready" })).catch((e) => worker === w && set({ status: "error", error: (e as Error).message }));
+    // Tor's demonstration gateway can take a long time (or never) to bootstrap; give up after a minute so the page
+    // keeps reading directly, visibly, instead of hanging on buffered requests.
+    const timeout = new Promise<never>((_, rej) => setTimeout(() => rej(new Error(`${n.label} did not bootstrap within 60 s (the demo gateway may be down); reads stayed direct`)), 60_000));
+    Promise.race([w.ready, timeout])
+      .then(() => worker === w && set({ status: "ready" }))
+      .catch((e) => {
+        if (worker !== w) return;
+        set({ status: "error", error: (e as Error).message });
+        try {
+          w.close();
+        } catch {}
+        worker = null;
+      });
     (async () => {
       for (;;) {
         try {
@@ -90,9 +102,12 @@ export function disableAnon() {
   set({ enabled: false, status: "off", error: undefined });
 }
 
-/** The page's fetch: anonymised when a worker is enabled and healthy, direct otherwise (and counted either way). */
+/**
+ * The page's fetch: anonymised once the worker is ready, direct otherwise (while it bootstraps, or after it failed),
+ * and counted either way so the share shown is honest.
+ */
 export const pageFetch: typeof fetch = (input, init) => {
-  if (worker && state.enabled && state.status !== "error") {
+  if (worker && state.enabled && state.status === "ready") {
     set({ requests: state.requests + 1 });
     return worker.fetch(input as any, init as any) as Promise<Response>;
   }
