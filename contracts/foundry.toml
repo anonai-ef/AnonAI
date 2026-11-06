@@ -9,7 +9,8 @@ evm_version = "cancun"
 remappings = [
   "@forshtat/hegota-support/=../node_modules/@forshtat/hegota-support/",
   "@semaphore-protocol/contracts/=../node_modules/@semaphore-protocol/contracts/",
-  "@zk-kit/lean-imt.sol/=../node_modules/@zk-kit/lean-imt.sol/",
+  # @zk-kit/lean-imt.sol is vendored: forge drops the "/" after a path component ending in ".sol"
+  "lean-imt/=vendor/lean-imt/",
   "poseidon-solidity/=../node_modules/poseidon-solidity/",
 ]
 allow_paths = ["../node_modules"]
