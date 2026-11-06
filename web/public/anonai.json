@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-06T13:25:07.977Z",
+  "generatedAt": "2026-11-06T13:28:03.504Z",
   "chainId": 1337,
   "gatewayUrl": "https://altmempoolgateway.forshtat.com/rpc",
   "minerUrl": "https://altmempool.forshtat.com/rpc",
@@ -50,6 +50,24 @@
       "policyName": "weth-0.01",
       "policyClass": "0x6e6774474fd069a4c766cd7c82c827f8375b4932240750e49344743fd4d903fd",
       "commitment": "21861640824530422872289688604979262384474177554889953496007278404713437423841",
+      "keys": null,
+      "used": null
+    },
+    {
+      "name": "carol",
+      "mode": "zk",
+      "policyName": "weth-0.01",
+      "policyClass": "0x6e6774474fd069a4c766cd7c82c827f8375b4932240750e49344743fd4d903fd",
+      "commitment": "13646524827935083595977507423601598586006152877989074045989224735940010161259",
+      "keys": null,
+      "used": null
+    },
+    {
+      "name": "claude",
+      "mode": "zk",
+      "policyName": "weth-0.01",
+      "policyClass": "0x6e6774474fd069a4c766cd7c82c827f8375b4932240750e49344743fd4d903fd",
+      "commitment": "7770657644503730305231935317209913778807814338088526220006669461417594813885",
       "keys": null,
       "used": null
     }

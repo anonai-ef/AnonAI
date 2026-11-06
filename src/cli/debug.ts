@@ -6,6 +6,20 @@ import { rpc } from "../lib/rpc.js";
 import { readState } from "../lib/state.js";
 
 const hash = (process.argv[2] ?? readState().lastTx) as `0x${string}` | undefined;
+
+/** Decodes an Error(string) revert payload embedded in a sidecar message, e.g. "reverted with data 0x08c379a0…". */
+function decodeReverts(s: string): string {
+  return s.replace(/0x08c379a0[0-9a-f]+/gi, (hex) => {
+    try {
+      const body = hex.slice(10);
+      const len = parseInt(body.slice(64, 128), 16);
+      const text = Buffer.from(body.slice(128, 128 + len * 2), "hex").toString("utf8");
+      return `Error("${text}")`;
+    } catch {
+      return hex;
+    }
+  });
+}
 if (!hash) {
   console.error("usage: yarn debug <txHash>");
   process.exit(2);
@@ -24,14 +38,14 @@ async function explorer(name: string, url: string) {
       console.log(`  admission: ${a.outcome ?? "?"}${a.errorCode ? ` (error ${a.errorCode})` : ""}${a.errorMessage ? ` ${a.errorMessage}` : ""}`);
       const checks: any[] = a.checks ?? [];
       const failed = checks.filter((c) => c.verdict !== "pass");
-      for (const c of failed) console.log(`    ${String(c.verdict).toUpperCase()} ${c.rule}${c.entity ? ` [${c.entity}]` : ""}${c.frameIndex !== undefined ? ` frame ${c.frameIndex}` : ""}: ${c.detail ?? ""}`);
+      for (const c of failed) console.log(`    ${String(c.verdict).toUpperCase()} ${c.rule}${c.entity ? ` [${c.entity}]` : ""}${c.frameIndex !== undefined ? ` frame ${c.frameIndex}` : ""}: ${decodeReverts(c.detail ?? "")}`);
       console.log(`    (${checks.length - failed.length} checks passed, ${failed.length} not)`);
       if (a.frameStatuses) console.log(`    frame statuses: ${JSON.stringify(a.frameStatuses)}`);
     }
     const events: any[] = t.lifecycle ?? t.events ?? [];
     if (events.length) {
       console.log("  lifecycle:");
-      for (const e of events) console.log(`    ${e.kind}${e.status ? ` ${e.status}` : ""}${e.reason ? `: ${e.reason}` : ""}${e.blockNumber ? ` (block ${e.blockNumber})` : ""}`);
+      for (const e of events) console.log(`    ${e.kind}${e.status ? ` ${e.status}` : ""}${e.reason ? `: ${decodeReverts(e.reason)}` : ""}${e.blockNumber ? ` (block ${e.blockNumber})` : ""}`);
     }
   } catch (e) {
     console.log(`  ${(e as Error).message}`);
