@@ -17,7 +17,9 @@
     "debug": "tsx src/cli/debug.ts",
     "agent": "tsx src/cli/agent.ts",
     "act": "tsx src/cli/act.ts",
-    "simulate": "tsx src/cli/simulate.ts"
+    "simulate": "tsx src/cli/simulate.ts",
+    "export:web": "tsx src/cli/exportWeb.ts",
+    "probe": "tsx src/cli/probe.ts"
   },
   "dependencies": {
     "@forshtat/hegota-support": "0.0.1",
