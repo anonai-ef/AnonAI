@@ -1,0 +1,6 @@
+#!/bin/sh
+# AnonAI MCP server launcher for Claude Code / Claude Desktop.
+#   claude mcp add anonai -- /ABS/PATH/TO/AnonAI/bin/anonai-mcp --agent claude
+# Runs from the repository root so it finds anonai.config.json5 and .anonai-state.json.
+cd "$(dirname "$0")/.." || exit 1
+exec ./node_modules/.bin/tsx src/mcp/server.ts "$@"

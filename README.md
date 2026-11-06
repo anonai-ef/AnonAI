@@ -45,8 +45,22 @@ If the devnet is reset: `yarn setup --fresh`, then register agents again.
 ## The agent (Claude + MCP)
 
 `src/mcp/server.ts` exposes `anonai_whoami`, `anonai_read`, `anonai_act`, `anonai_act_canonical`,
-`anonai_status`. `demo/.mcp.json` wires it into Claude Code for agent `alice`; `demo/CLAUDE.md` is the
-agent's instruction block. Run `claude` inside `demo/` and ask it to check the treasury and pay a supplier.
+`anonai_status`. Install it for Claude Code with one command (after `yarn setup` and `yarn agent new claude --mode zk --class weth-0.01`):
+
+```sh
+claude mcp add anonai -- "$PWD/bin/anonai-mcp" --agent claude
+```
+
+For Claude Desktop, add to `claude_desktop_config.json`:
+
+```json
+{ "mcpServers": { "anonai": { "command": "/ABS/PATH/AnonAI/bin/anonai-mcp", "args": ["--agent", "claude"] } } }
+```
+
+Then a prompt such as: *"Use AnonAI: check the treasury's WETH balance, then pay 0.002 WETH to
+0x8943545177806ED17B9F23F0a21ee5948eCaa776. Tell me the tx hash, the block, who the chain saw as
+sender and payer, and which signature scheme it carried."* `demo/.mcp.json` and `demo/CLAUDE.md`
+give the same setup plus the agent's instruction block; run `claude` inside `demo/`.
 
 ## Dashboard
 

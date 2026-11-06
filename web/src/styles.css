@@ -165,5 +165,24 @@ footer { margin-top: 40px; padding-top: 14px; border-top: 1px solid var(--line);
 .set.acting.key .m { opacity: 0.35; }
 .set.acting.key .m.revealed { opacity: 1; background: var(--key); border-color: var(--key); box-shadow: 0 0 18px rgba(79, 209, 197, 0.9); transform: scale(1.25); }
 
+/* ------------------------------------------------------------------ home ---------------------------------- */
+.home-hero { display: grid; grid-template-columns: 1.5fr 1fr; gap: 26px; align-items: center; }
+@media (max-width: 900px) { .home-hero { grid-template-columns: 1fr; } }
+.home-hero h2 { font-size: 30px; margin: 0 0 10px; line-height: 1.15; }
+.lede.big { font-size: 16px; line-height: 1.6; }
+.hero-facts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.hero-facts div { display: flex; flex-direction: column; align-items: center; padding: 14px 8px; border: 1px solid var(--line); border-radius: 12px; background: var(--bg); font-size: 11px; color: var(--dim); text-transform: uppercase; letter-spacing: 0.5px; text-align: center; }
+.hero-facts .n { font-size: 26px; color: var(--text); font-family: "IBM Plex Mono", monospace; text-transform: none; letter-spacing: 0; }
+.grid.three { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+.card h3 { margin: 16px 0 6px; font-size: 13px; color: var(--dim); text-transform: uppercase; letter-spacing: 0.6px; }
+.codeblock { position: relative; background: var(--bg); border: 1px solid var(--line); border-radius: 10px; }
+.codeblock pre { margin: 0; padding: 12px 70px 12px 14px; overflow: auto; font-size: 12.5px; line-height: 1.55; white-space: pre; }
+.copy { position: absolute; top: 8px; right: 8px; padding: 3px 10px; font-size: 12px; }
+.prompts { list-style: none; padding: 0; margin: 0; }
+.prompts li { position: relative; background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 12px 70px 12px 14px; margin-bottom: 10px; font-size: 14px; line-height: 1.5; }
+.prompts li p { margin: 0; }
+a.btn { display: inline-block; padding: 8px 14px; border: 1px solid var(--line); border-radius: 8px; color: var(--text); }
+.txline { margin: 12px 0 0; font-size: 13px; }
+
 .log { height: 260px; overflow: auto; font-size: 12px; line-height: 1.5; background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 10px; }
 .log .t { color: var(--accent); }

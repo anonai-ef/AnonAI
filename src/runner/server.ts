@@ -47,14 +47,41 @@ const readBody = (req: http.IncomingMessage) =>
     });
   });
 
+/** Decodes an Error(string) payload inside a node message so the page shows "AnonAI: budget exhausted", not hex. */
+function decodeReverts(s: string): string {
+  return s.replace(/0x08c379a0[0-9a-f]+/gi, (hex) => {
+    try {
+      const body = hex.slice(10);
+      const len = parseInt(body.slice(64, 128), 16);
+      return `Error("${Buffer.from(body.slice(128, 128 + len * 2), "hex").toString("utf8")}")`;
+    } catch {
+      return hex;
+    }
+  });
+}
+
+/** A transaction's maximum cost is charged to the class budget up front; keep at least a few actions' worth. */
+const MIN_BUDGET_WEI = parseEther("0.006");
+const TOP_UP_ETH = "0.03";
+
 async function act(body: { agent: string; to: string; amountWeth: string; canonical?: boolean; autoHeartbeat?: boolean; prepareOnly?: boolean }) {
   const cfg = loadConfig();
   const runId = `${Date.now().toString(36)}`;
   const base = { runId, agent: body.agent, to: body.to, amountWeth: body.amountWeth };
   const action = { target: cfg.weth, value: 0n, data: transferCalldata(body.to as Address, parseEther(body.amountWeth)) };
   const onEvent = (e: ActEvent) => emit(`act.${e.type}`, { ...base, ...e });
-  emit("act.start", { ...base, mode: readState().agents[body.agent]?.mode, canonical: !!body.canonical });
+  const rec = readState().agents[body.agent];
+  emit("act.start", { ...base, mode: rec?.mode, canonical: !!body.canonical });
   try {
+    // keep the class budget topped up, otherwise pre_verify reverts with "budget exhausted"
+    if (rec && !body.canonical) {
+      const budget = await budgetOf(rec.policyName);
+      if (budget < MIN_BUDGET_WEI) {
+        emit("fund.start", { ...base, policy: rec.policyName, budget: budget.toString(), eth: TOP_UP_ETH });
+        const h = await fundBudget(rec.policyName, TOP_UP_ETH);
+        emit("fund.done", { ...base, policy: rec.policyName, eth: TOP_UP_ETH, txHash: h, budget: (await budgetOf(rec.policyName)).toString() });
+      }
+    }
     let built;
     try {
       built = await buildActionTx(body.agent, action, onEvent);
@@ -92,7 +119,7 @@ async function act(body: { agent: string; to: string; amountWeth: string; canoni
     return result;
   } catch (e) {
     const err = e as Error;
-    emit("act.rejected", { ...base, code: e instanceof ActError ? e.code : "RPC", message: err.message });
+    emit("act.rejected", { ...base, code: e instanceof ActError ? e.code : "RPC", message: decodeReverts(err.message) });
     throw err;
   }
 }
@@ -107,7 +134,7 @@ async function sendPrepared(id: string) {
     emit(r.ok ? "act.included" : "act.reverted", { ...base, ...r });
     return r;
   } catch (e) {
-    emit("act.rejected", { ...base, code: "RPC", message: (e as Error).message, hash: id });
+    emit("act.rejected", { ...base, code: "RPC", message: decodeReverts((e as Error).message), hash: id });
     throw e;
   }
 }

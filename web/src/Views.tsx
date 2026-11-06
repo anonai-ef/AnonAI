@@ -103,7 +103,7 @@ export function FeedView({ f, feed, selected, onSelect }: { f: Facts; feed: Admi
               return (
                 <tr key={a.txHash} className={selected?.txHash === a.txHash ? "sel" : ""} onClick={() => onSelect(a)}>
                   <td className="dim">{a.at ? new Date(a.at > 1e12 ? a.at : a.at * 1000).toLocaleTimeString() : ""}</td>
-                  <td className="mono">{short(a.txHash)}</td>
+                  <td className="mono"><a href={`${f.explorerUrl}tx/${a.txHash}`} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} title="open in the devnet explorer">{short(a.txHash)} ↗</a></td>
                   <td><span className={`pill ${a.outcome}`}>{a.outcome}</span></td>
                   <td><span className={`pill ${mode}`}>{mode === "zk" ? "ZK proof · sig scheme 0" : mode === "key" ? "one-time key · sig scheme 1" : "admin (linear nonce)"}</span></td>
                   <td className="mono dim">{a.nonceKeys?.[0] ? short(a.nonceKeys[0], 8) : "0x0"}</td>

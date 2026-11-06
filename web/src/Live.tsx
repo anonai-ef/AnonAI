@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { short, type Facts, type Overview } from "./lib/data";
 import { runnerHealth, runnerPost, runnerUrl, setRunnerUrl, subscribe, type RunnerEvent } from "./lib/runner";
+import { decodeRevert } from "./Views";
 
 export interface LiveConfig {
   agent: string;
@@ -333,7 +334,7 @@ function Autopilot({ f, o, cfg, run, history, log, onReset }: { f: Facts; o: Ove
           </div>
         </div>
         {notice && <p className="notice">{notice}</p>}
-        <Pipeline run={run} />
+        <Pipeline run={run} explorerUrl={f.explorerUrl} />
       </section>
 
       <section className="grid two">
@@ -349,7 +350,7 @@ function Autopilot({ f, o, cfg, run, history, log, onReset }: { f: Facts; o: Ove
   );
 }
 
-function Pipeline({ run }: { run: Run | null }) {
+function Pipeline({ run, explorerUrl }: { run: Run | null; explorerUrl: string }) {
   const at = run ? order(run.failed?.at ?? run.stage) : -1;
   const done = run && run.stage === "block" && !run.failed;
   return (
@@ -367,7 +368,13 @@ function Pipeline({ run }: { run: Run | null }) {
           );
         })}
       </div>
-      {run?.failed && <p className="failmsg">{run.failed.at === "gateway" && run.canonical ? "Canonical mempool: " : "Refused: "}{run.failed.message}</p>}
+      {run?.hash && (
+        <p className="txline">
+          tx <a className="mono" href={`${explorerUrl}tx/${run.hash}`} target="_blank" rel="noreferrer">{short(run.hash, 10)} ↗ explorer</a>
+          {run.block ? <span className="dim"> · included in block {run.block}</span> : run.failed ? <span className="dim"> · refused</span> : <span className="dim"> · in the mempool</span>}
+        </p>
+      )}
+      {run?.failed && <p className="failmsg">{run.failed.at === "gateway" && run.canonical ? "Canonical mempool: " : "Refused: "}{decodeRevert(run.failed.message)}</p>}
       {run?.waitingHeartbeat && <p className="notice">epoch used up for this agent → the runner is opening a new epoch (heartbeat, ~30 s), then retries</p>}
     </div>
   );

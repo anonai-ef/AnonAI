@@ -1,17 +1,18 @@
 import { useEffect, useState } from "react";
+import { HomeView } from "./Home";
 import { LiveView } from "./Live";
 import { disableAnon, enableAnon, getAnonState, NETWORKS, subscribeAnon, type AnonState, type NetworkId } from "./lib/anon";
 import { loadFacts, loadFeed, loadOverview, type Admission, type Facts, type Overview } from "./lib/data";
 import { FeedView, StackView, StoryView } from "./Views";
 
-type Tab = "live" | "stack" | "feed" | "story";
+type Tab = "home" | "live" | "stack" | "feed" | "story";
 
 export function App() {
   const [facts, setFacts] = useState<Facts | null>(null);
   const [overview, setOverview] = useState<Overview | null>(null);
   const [feed, setFeed] = useState<Admission[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [tab, setTab] = useState<Tab>((location.hash.replace("#", "") as Tab) || "live");
+  const [tab, setTab] = useState<Tab>((location.hash.replace("#", "") as Tab) || "home");
   const [selected, setSelected] = useState<Admission | null>(null);
 
   useEffect(() => {
@@ -57,9 +58,9 @@ export function App() {
         </div>
         <AnonToggle />
         <nav>
-          {(["live", "stack", "feed", "story"] as Tab[]).map((t) => (
+          {(["home", "live", "stack", "feed", "story"] as Tab[]).map((t) => (
             <button key={t} className={tab === t ? "on" : ""} onClick={() => go(t)}>
-              {t === "live" ? "Live" : t === "stack" ? "Stack" : t === "feed" ? "Mempool feed" : "Story"}
+              {t === "home" ? "Home" : t === "live" ? "Live" : t === "stack" ? "Stack" : t === "feed" ? "Mempool feed" : "Story"}
             </button>
           ))}
         </nav>
@@ -68,6 +69,7 @@ export function App() {
 
       {error && <div className="banner">{error}</div>}
 
+      {facts && tab === "home" && <HomeView f={facts} go={go} />}
       {facts && tab === "live" && <LiveView f={facts} o={overview} />}
       {facts && tab === "stack" && <StackView f={facts} o={overview} />}
       {facts && tab === "feed" && <FeedView f={facts} feed={feed} selected={selected} onSelect={setSelected} />}

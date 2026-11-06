@@ -44,7 +44,7 @@ export function subscribe(onEvent: (e: RunnerEvent) => void, since = 0): () => v
     } catch {}
   };
   // EventSource only fires "message" for unnamed events; the runner names them, so listen generically.
-  const types = ["act.start", "act.sync", "act.proving", "act.proved", "act.key", "act.built", "act.submitted", "act.included", "act.reverted", "act.rejected", "act.epochUsed", "act.prepared", "act.canonicalRejected", "act.canonicalAccepted", "heartbeat.start", "heartbeat.log", "heartbeat.done", "revoke.start", "revoke.log", "revoke.done", "agent.registering", "agent.log", "agent.registered", "fund.done", "treasury.done"];
+  const types = ["act.start", "act.sync", "act.proving", "act.proved", "act.key", "act.built", "act.submitted", "act.included", "act.reverted", "act.rejected", "act.epochUsed", "act.prepared", "act.canonicalRejected", "act.canonicalAccepted", "heartbeat.start", "heartbeat.log", "heartbeat.done", "revoke.start", "revoke.log", "revoke.done", "agent.registering", "agent.log", "agent.registered", "fund.start", "fund.done", "treasury.done"];
   for (const t of types) es.addEventListener(t, handler as EventListener);
   return () => es.close();
 }
