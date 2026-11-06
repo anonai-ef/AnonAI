@@ -5,3 +5,4 @@ contracts/cache
 contracts/lib
 web/node_modules
 web/dist
+.claude/

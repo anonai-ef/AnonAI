@@ -1,6 +1,6 @@
 # AnonAI build specification
 
-Version 1, 2026-11-06. This is the document a building agent follows. It supersedes the product
+Version 1, 2026-11-06; status and sections 9, 10, 12, 13 updated 2026-11-07 after the build shipped. This is the document a building agent follows. It supersedes the product
 specification ("Agent keystore, permissions and gas sponsorship on EIP-8141") wherever the two differ,
 because every claim here was checked against the live devnet, the sidecar source and the rules pages
 on 2026-11-06. Section 0 lists the decisions and why.
@@ -22,7 +22,7 @@ alt-mempool** (the ERC-8421 rule set the sidecar implements), **staked entity**,
 | D4 | **Roots are bookkept in the Keystore and also committed to the EIP-8272 predeploy; the account validates against the Keystore, the transaction declares the predeploy reference.** | The `0x…8272` predeploy is write-only (its code accepts exactly `salt‖root`, 64 bytes, and `SSTORE`s; there is no getter), and no `TXPARAM` exposes declared references. So on this devnet a contract cannot check a declared root itself. The Keystore is the on-chain source of truth; the declared reference gives the mempool its freshness/eviction behaviour and demonstrates EIP-8272. |
 | D5 | **One Semaphore group (LeanIMT) per policy class.** The proof's root reveals the class; budgets are keyed by class. | A single tree cannot bind an identity commitment to a policy. Anonymity set = members of the class. Owners choose from a small catalogue of classes so classes are shared. |
 | D6 | **Revocation = remove the leaf and bump the class `generation`.** The account requires the proof's root to belong to the current generation. | Old roots stay valid inside a generation (so pending transactions are not invalidated by routine registrations), but a revocation invalidates every older root at once. Revocation is immediate at the next block. |
-| D7 | **Anon-RPC is out of scope for v1.** The read path is a plain RPC to ethrex. | No Node harness exists (only `@anon-rpc/browser-harness`, iframe + Web Worker + WebRTC). Revisit only if everything else is done. |
+| D7 | **Anon-RPC covers the dashboard's reads, not the runtime's.** The web dashboard routes every JSON-RPC and explorer read through `@anon-rpc/browser-harness` when the user turns "Private reads" on (Tor, Nym or passthrough worker); the Node runtime (MCP server, runner) reads directly. | Only a browser harness exists (null-origin iframe + Web Worker + WebRTC). Integrated 2026-11-07 and verified end to end with the passthrough worker (424 reads through the sandbox); the Tor demonstration gateway was slow to bootstrap, so the page reads directly until a worker is ready and gives up after 60 s. |
 | D8 | **Paymaster budgets are charged in a `pre_verify` frame with `TXPARAM(MAX_COST)`; the `pay` frame requires a charge receipt stored under `TXPARAM(SIG_HASH)` by this transaction's own pre_verify.** | Probed on the devnet (`yarn probe`): `FRAMEPARAM(…, STATUS)` faults on this ethrex build and transient storage does not survive from frame 1 to frame 2, so the status check ERC-8421 describes cannot be done here. The receipt is strictly stronger: payment is approved only if this very transaction charged a budget. `SIG_HASH`, `SENDER`, `MAX_COST`, `FRAME_COUNT`, `CURRENT_FRAME_INDEX`, `NONCE_KEY_COUNT/0` and the body-frame `FRAMEPARAM`s all work. |
 | D9 | **Both the shared account and the paymaster stake 0.012 ETH** at the NaiveStakingRegistry. | A staked entity may read any storage of non-entity contracts (STORAGE-032) and its own storage as payer (STORAGE-031). The account needs a `view` call into the Keystore and the verifier; the paymaster needs its own budget table. |
 | D10 | **Submission only through the public gateway's `eth_sendFrameTransaction`.** Never `ethrex_submitPrivilegedFrameTransaction`, never the genesis key, never `debug_*`. | Operator guidance: private submission is "not CROPS"; privileged use of the public ethrex is at our own risk. |
@@ -166,7 +166,9 @@ hash equals the class the proof was made for. The owner side ships a small catal
 - Group per class: the Keystore's LeanIMT of commitments. The prover rebuilds it from
   `Keystore.members(class)` (array getter) or `MemberAdded`/`MemberRemoved` events.
 - Proof: `generateProof(identity, group, message, scope, MERKLE_DEPTH = 10)` from
-  `@semaphore-protocol/proof`. Fixed depth 10 (1,024 members per class) keeps verifier gas constant.
+  `@semaphore-protocol/proof`. Fixed depth 10 caps a class at 1,024 members; Semaphore supports depths up to 32
+  (2³² members) and the deployed verifier holds keys for all of them, so raising the constant is the only change
+  (verification gas unchanged, proving time grows a few ms per level, the LeanIMT grows by itself).
   Returns `{ merkleTreeDepth, merkleTreeRoot, nullifier, message, scope, points[8] }`.
 - `scope = rootSeq` (section 4.4). `nullifier = poseidon(scope, secret)` is unique per (agent, root).
 - `message` binds the proof to the exact action (section 4.3).
@@ -409,11 +411,14 @@ variables; everything else comes from `anonai.config.json5` and `.anonai-state.j
 
 | Tool | Input | Does | Returns |
 |---|---|---|---|
-| `anonai_whoami` | – | reads the agent's policy and the shared account/paymaster addresses | policy, class, addresses, remaining class budget |
-| `anonai_read` | `{ method, params }` restricted to `eth_call`, `eth_getBalance`, `eth_getTransactionReceipt`, `eth_blockNumber`; plus helpers `usdcBalance(address)` | JSON-RPC read against ethrex | result |
-| `anonai_act` | `{ to, amount }` (USDC transfer) or `{ target, calldata, value }` | sync group, build message, prove, assemble frames, declare root, submit to the gateway | `txHash`, explorer link, nullifier, root |
-| `anonai_status` | `{ txHash }` | `skandha_frameTransactionStatus` + explorer admission report + receipt | status, rule-by-rule report on rejection |
-| `anonai_act_canonical` | same as act | builds the identical tx and sends it to ethrex `eth_sendRawTransaction` | the canonical rejection (demo shot) |
+| `anonai_whoami` | – | the agent's mode, policy, shared account, paymaster, class epoch/generation, remaining budget, treasury | as built (`src/mcp/server.ts`) |
+| `anonai_read` | `{ what: wethBalance \| ethBalance \| blockNumber \| receipt, address?, txHash? }` | reads against ethrex | result |
+| `anonai_act` | `{ to, amountWeth }` | sync group, bind message, prove (or pick the next one-time key), assemble frames, declare root, submit, wait | hash, block, gas, frames, sender, payer, signature scheme, nullifier/key |
+| `anonai_act_canonical` | `{ to, amountWeth }` | the identical tx to ethrex's canonical mempool | the rejection text |
+| `anonai_status` | `{ txHash }` | mempool status, admission report (failed rules first), receipt, explorer link | as built |
+
+Launcher: `bin/anonai-mcp --agent <name>`; install with `claude mcp add anonai -- "$PWD/bin/anonai-mcp" --agent claude`.
+The agent is picked by name from `.anonai-state.json`, so the server must run on the machine that holds the state.
 
 Agent instructions block (goes into the demo project's `CLAUDE.md`):
 
@@ -435,15 +440,28 @@ Rules:
 
 | Command | Does |
 |---|---|
-| `setup` | operator key + faucet; deploy PoseidonT3, SemaphoreVerifier, Keystore (linked), SharedAccount (value: stake + margin), BudgetPaymaster (value: gas float); stake both via admin self-relay frames; write state. Idempotent, `--fresh` redeploys (devnet resets wipe contracts). |
-| `agent new <name> --class usdc-10` | create identity, store secret, register commitment in the class, commit root; record slot |
-| `agent revoke <name>` | compute siblings, `revoke`, commit root |
-| `heartbeat <class>` | re-commit the class root (new epoch) |
-| `fund <class> <eth>` | `BudgetPaymaster.fund` |
-| `usdc mint <to> <amount>` | the devnet USDC deployer is the published operator of the predeploy; if minting is not possible, buy from the faucet-funded path or swap; the demo only needs a few USDC in the SharedAccount |
-| `debug <txHash>` | explorer admission report, lifecycle, receipt (same habit as the workshop's step 11) |
+| `yarn setup [--fresh] [--redeploy a,b]` | operator key + faucet; PoseidonT3 through the CREATE2 proxy (prebuilt bytecode), SemaphoreVerifier, Keystore (linked), SharedAccount (value: stake + margin), BudgetPaymaster (value: gas float); stake both via admin self-relay frames; write state. Idempotent. |
+| `yarn agent new <name> --mode zk\|key --class weth-0.01 [--keys n]` | create the secret, register the commitment (or n one-time addresses) in the class, commit the root |
+| `yarn agent revoke <name>` | compute siblings, `revoke` (generation bump), commit the root |
+| `yarn agent heartbeat <class>` | re-commit the class root (new epoch), waiting for the spacing if needed |
+| `yarn agent fund <class> <eth>` · `yarn agent treasury <eth>` · `yarn agent list` | budget, WETH for the shared account (the asset is WETH: the USDC predeploy's deployer key is off limits), overview |
+| `yarn act …` · `yarn simulate …` · `yarn debug <hash>` · `yarn probe` | see README; `debug` decodes revert reasons |
+| `yarn runner` | local HTTP + SSE service the dashboard drives: `/agents`, `/act` (auto heartbeat, auto budget top-up), `/prepare`, `/send-prepared`, `/heartbeat`, `/revoke`, `/fund`, `/treasury`, `/events` |
+| `yarn export:web` · `yarn --cwd web dev\|build` | dashboard facts and the site (`web/`) |
+
+Shared logic lives in `src/lib/owner.ts` (owner operations) and `src/cli/act.ts` (`buildActionTx`, `submitAndWait`), used by the CLI, the MCP server and the runner alike.
 
 ---
+
+### 9b. Dashboard and runner (built 2026-11-06/07)
+
+`web/` is a Vite + React site that reads the devnet directly (viem + the sidecar explorer API) and, when the
+local runner is reachable at `http://localhost:8787`, drives it: a first-run wizard (mode, class and agent, action
+and cadence) hands off to an autopilot whose six-stage pipeline animates from the runner's SSE events; a
+"who can see what" panel renders the private fields redacted and, in key mode, the linkable ones in amber; the
+anonymity set shows the class members (zk: all alike; key: one revealed). Home is the MCP install page with
+prompts; Mempool feed lists every shared-account admission with the sidecar's rule-by-rule report; every hash
+links to the devnet explorer. "Private reads" routes the page's reads through an Anon-RPC worker (D7).
 
 ## 11. Demo script (3 minutes, one screen split three ways: Claude chat, terminal with MCP logs, dashboard/explorer)
 
@@ -472,14 +490,16 @@ Small commits, one per row. Each row has an acceptance test that must pass befor
 | M | Deliverable | Acceptance |
 |---|---|---|
 | M0 ✅ | scaffold, TS foundation, BudgetPaymaster + tests, Semaphore deps | `forge test`, `tsc --noEmit` pass |
-| M1 | `Keystore.sol` (LeanIMT per class, generation, rootSeq, commit to predeploy) + forge tests (commit mocked with `vm.etch` of a recorder at `0x…8272`) | register/revoke/heartbeat/rootInfo tests pass |
-| M2 | `SharedAccount.sol` (frame 0 logic per 6.1, admin stake path) + forge tests with helper mocks and a real Semaphore proof fixture generated by a TS script (`scripts/make-proof-fixture.ts`) | a real proof verifies in forge; wrong message/scope/root/nullifier binding each fail |
-| M3 | `src/lib/semaphore.ts` (identity, group sync from Keystore, proof), `src/lib/anonTx.ts` (frames 0–3, nonce key, recent-root reference, ARBITRARY signature) | unit test builds a tx whose `toWire` round-trips; `ethrex_simulateFrameTransaction` of a real tx on the devnet returns success for all prefix frames |
-| M4 | `cli setup` (deploy + link PoseidonT3 + stake both entities + fund) | state file holds all addresses; registry shows 0.012 ETH for both; `eth_estimateFrameTransactionGas` on a dry-run tx returns numbers; record them in 8.3 |
-| M5 | first live action through the gateway; `cli debug` | explorer shows admitted + included; canonical rejection reproduced |
-| M6 | MCP server + `.mcp.json` + agent `CLAUDE.md` | Claude Code completes demo steps 2–3 unassisted |
-| M7 | demo steps 5–7 (second agent, rate limit, revocation); README with CROPS section; measured gas table | full script runs end to end twice |
-| Stretch | owner dashboard (single page), Anon-RPC read path via headless harness | – |
+| M1 ✅ | `Keystore.sol` (LeanIMT per class, generation, rootSeq, commit to predeploy) + forge tests | 7 tests pass |
+| M2 ✅ | `SharedAccount.sol` (zk + key modes, admin stake path) + forge tests driving the real prover through FFI | 16 tests pass incl. real proofs; wrong message/scope/root/nullifier bindings each fail |
+| M3 ✅ | `semaphore.ts`, `anonTx.ts`, `keys.ts`, `keystoreClient.ts`, `owner.ts` | `yarn simulate` returns success for all frames on the devnet |
+| M4 ✅ | `yarn setup` (PoseidonT3 via proxy, verifier, linked Keystore, account, paymaster, stake both) | registry shows 0.012 ETH for both; gas measured (8.3) |
+| M5 ✅ | first live actions (key mode block 4074, zk mode block 4086); `yarn debug` | admitted + included; canonical rejection reproduced |
+| M6 ✅ | MCP server, `bin/anonai-mcp`, `demo/.mcp.json`, `demo/CLAUDE.md` | tools list and `whoami` verified over stdio; wired into Claude Code |
+| M7 ✅ | rate limit, heartbeat, revocation (prepare/send-prepared), second agent; README | rehearsed live 2026-11-06 |
+| M8 ✅ | dashboard (`web/`): home with MCP install, live wizard + autopilot + animated pipeline, who-sees-what, anonymity set, feed with admission reports; local runner with SSE | verified in Chrome against the devnet 2026-11-06/07 |
+| M9 ✅ | Anon-RPC private reads in the dashboard (D7) | passthrough verified end to end; Tor pending the demo gateway |
+| Open | owner panel that signs revoke/heartbeat from a browser wallet; presentation mode; hide revoked agents from the wizard's reuse list | – |
 
 File layout:
 
@@ -503,7 +523,8 @@ replace the `__$…$__` placeholder in Keystore's creation bytecode (the artifac
 
 | Risk | Signal | Fallback |
 |---|---|---|
-| Gateway `precompiles: []` refuses the pairing precompile | admission report: "accesses un-deployed contract 0x…08 with opcode STATICCALL" | Post in the EF Telegram group asking for `precompiles` = `0x…01`…`0x…0a` on the public sidecar (others asked; the operator agreed). Meanwhile develop against `ethrex_simulateFrameTransaction`, which runs the full VERIFY. If not fixed by the demo: run the sidecar's `deploy/devnet/docker-compose.yml` locally (needs Docker) with `precompiles` set, document the one-line change in the README; the operator accepts local submissions. |
+| ~~Gateway `precompiles: []` refuses the pairing precompile~~ **resolved 2026-11-06**: both public sidecars now allow `0x01`–`0x11` and P256 (`skandha_config.precompiles`) | admission report: "accesses un-deployed contract 0x…08 with opcode STATICCALL" | If it regresses: the sidecar reads `PRECOMPILES` from its environment; run it locally with that set (the operator accepts documented local submissions), or switch the agent to key mode, which needs no precompiles. |
+| Class gas budget runs dry (each action reserves `MAX_COST` ≈ 0.002 ETH) | `AnonAI: budget exhausted` in the admission report; the sidecar may surface it as a `MAX_VERIFY_GAS` message | the runner tops the class up when under 0.006 ETH; `yarn agent fund <class> 0.05` |
 | Devnet reset wipes contracts | `STATE_STALE`-style errors, code at addresses empty | `cli setup --fresh` (one command), re-register agents |
 | Verifier gas higher than estimated | estimate > limit, "out of gas" in frame 0 | raise `limits.execution` (cap is 10M); never let it revert out-of-gas |
 | Proof generation slow or artifact download fails | act takes > 10 s | vendored artifacts; depth 10; warm the prover at server start |
