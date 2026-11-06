@@ -173,6 +173,7 @@ export function decodeRevert(s: string): string {
 export function StoryView({ f }: { f: Facts }) {
   return (
     <main className="story">
+      <div className="brand-banner"><img src="./logo-full.png" alt="AnonAI: full-stack privacy for autonomous AI agents" /></div>
       <section>
         <h2>The problem</h2>
         <p>An autonomous AI agent that acts on Ethereum today holds a raw private key on a server, keeps ETH on it for gas, and acts from one public address anyone can tie to its owner. Every agent-wallet product keeps all three; ERC-8004 makes the owner link explicit.</p>

@@ -7,6 +7,22 @@
   resolved "https://registry.yarnpkg.com/@adraffy/ens-normalize/-/ens-normalize-1.11.1.tgz#6c2d657d4b2dfb37f8ea811dcb3e60843d4ac24a"
   integrity sha512-nhCBV3quEgesuf7c7KYfperqSS14T8bYuvJ8PcLJp6znkZpFc0AuW4qBtr8eKVyPPe/8RSr7sglCWPU5eaxwKQ==
 
+"@anon-rpc/browser-harness@0.4.0":
+  version "0.4.0"
+  resolved "https://registry.yarnpkg.com/@anon-rpc/browser-harness/-/browser-harness-0.4.0.tgz#f0a58fee46f16d32c723ad63519ce3ae335442d1"
+  integrity sha512-9h+ks9lGmGTXE3fuFopowag+pLVJxhgmYG3SEBI1qk8ik7RGkxPT7Ub7RmbkDJ92/4VCa8gjT45BWoEnGynJYQ==
+  dependencies:
+    "@anon-rpc/harness-core" "0.4.0"
+    "@kpstreams/webrtc-client" "^0.2.1"
+    "@noble/hashes" "^1.5.0"
+
+"@anon-rpc/harness-core@0.4.0":
+  version "0.4.0"
+  resolved "https://registry.yarnpkg.com/@anon-rpc/harness-core/-/harness-core-0.4.0.tgz#24559c7fe55e5213e13db93588eaeffb4390cd22"
+  integrity sha512-ZFVeE0tkUgXPw1qu99s8JPKD4jFatHZ+nELisZ4WF+YMpCrBFIvpJe0qdCoLcmbhH1brbsC35qe8F1G3HxIbgA==
+  dependencies:
+    "@noble/hashes" "^1.5.0"
+
 "@babel/code-frame@^7.29.7":
   version "7.29.7"
   resolved "https://registry.yarnpkg.com/@babel/code-frame/-/code-frame-7.29.7.tgz#f2fbbfea87c44a21590ec515b778b2c26d8866e7"
@@ -314,6 +330,18 @@
     "@jridgewell/resolve-uri" "^3.1.0"
     "@jridgewell/sourcemap-codec" "^1.4.14"
 
+"@kpstreams/core@^0.2.1":
+  version "0.2.1"
+  resolved "https://registry.yarnpkg.com/@kpstreams/core/-/core-0.2.1.tgz#d483cc0264792d718d0aa9c985ca7d459e93a900"
+  integrity sha512-cx82IpcAG2OoteTrUbHECIm2jc5rJ0+O8qB7cKAXdvkN5oje4aOIiF8nb7nEk+LSMISz8Zz7znrj+gzSXEBKuw==
+
+"@kpstreams/webrtc-client@^0.2.1":
+  version "0.2.1"
+  resolved "https://registry.yarnpkg.com/@kpstreams/webrtc-client/-/webrtc-client-0.2.1.tgz#a2ab01e56b36220cb0a838a93865f71143d1c088"
+  integrity sha512-B4o0mN6QmSblhfaKy74xezV82LaIqp6tdZ05HBAuBV2sSw9wFsT3TY6xmMJeHOECWVwFJGnSit9k0RV6HnPPBw==
+  dependencies:
+    "@kpstreams/core" "^0.2.1"
+
 "@noble/ciphers@^1.3.0":
   version "1.3.0"
   resolved "https://registry.yarnpkg.com/@noble/ciphers/-/ciphers-1.3.0.tgz#f64b8ff886c240e644e5573c097f86e5b43676dc"
@@ -333,7 +361,7 @@
   dependencies:
     "@noble/hashes" "1.8.0"
 
-"@noble/hashes@1.8.0", "@noble/hashes@^1.8.0", "@noble/hashes@~1.8.0":
+"@noble/hashes@1.8.0", "@noble/hashes@^1.5.0", "@noble/hashes@^1.8.0", "@noble/hashes@~1.8.0":
   version "1.8.0"
   resolved "https://registry.yarnpkg.com/@noble/hashes/-/hashes-1.8.0.tgz#cee43d801fcef9644b11b8194857695acd5f815a"
   integrity sha512-jCs9ldd7NwzpgXDIf6P3+NrHh9/sD6CQdxHyjQI+h/6rDNo88ypBxxz45UDuZHz9r3tNz7N/VInSVoVdtXEI4A==

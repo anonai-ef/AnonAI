@@ -241,7 +241,8 @@ function Wizard({ f, o, agents, onDone }: { f: Facts; o: Overview | null; agents
             <dt>agent</dt><dd>{agent} <span className={`pill ${mode}`}>{mode}</span> in <strong>{policyName}</strong>{agents.includes(agent) ? " (already registered)" : " (will be registered now)"}</dd>
             <dt>action</dt><dd>pay {amount} WETH to <span className="mono">{short(to)}</span> every {cadence}s</dd>
             <dt>pays gas</dt><dd>the budget paymaster, from the {policyName} budget ({cls?.budget ?? "…"} ETH left)</dd>
-            <dt>agent holds</dt><dd>no ETH, no chain key</dd>
+            <dt>agent holds</dt><dd>no ETH, no chain key — only a secret kept by the local runner, from which it {mode === "zk" ? "proves membership" : "derives one-time keys"}</dd>
+            <dt>owner</dt><dd><span className="mono">{f.operator ? short(f.operator) : "operator key"}</span> <span className="dim">the operator key held by your runner: it registers agents and funds budgets, and never appears in an agent's transaction</span></dd>
           </dl>
           {error && <p className="bad">{error}</p>}
           <div className="row end"><button onClick={() => setStep(2)}>Back</button><button className="primary" disabled={!!busy} onClick={launch}>{busy ?? "Launch autopilot"}</button></div>

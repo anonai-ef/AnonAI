@@ -35,7 +35,20 @@ pre.block { background: var(--bg); border: 1px solid var(--line); border-radius:
 .page { max-width: 1280px; margin: 0 auto; padding: 20px 24px 60px; }
 header { display: flex; align-items: center; gap: 24px; padding-bottom: 18px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
 .brand { display: flex; align-items: center; gap: 14px; flex: 1; min-width: 320px; }
-.logo { font-size: 36px; color: var(--accent); text-shadow: 0 0 24px rgba(124, 156, 255, 0.6); }
+.logo { width: 52px; height: 52px; border-radius: 12px; background: #fff; padding: 4px; object-fit: contain; box-shadow: 0 0 24px rgba(124, 156, 255, 0.35); }
+.anon-toggle { display: flex; align-items: center; gap: 8px; font-size: 12px; padding: 6px 10px; border: 1px solid var(--line); border-radius: 999px; background: var(--panel); }
+.anon-toggle .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--dim); }
+.anon-toggle.booting .dot { background: var(--warn); animation: pulse 1s infinite; }
+.anon-toggle.ready .dot { background: var(--ok); box-shadow: 0 0 10px rgba(74, 222, 128, 0.8); }
+.anon-toggle.error .dot { background: var(--bad); }
+.anon-toggle .lbl { color: var(--dim); text-transform: uppercase; letter-spacing: 0.5px; }
+.anon-toggle select { font: inherit; background: var(--bg); color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 3px 6px; }
+.anon-toggle button { padding: 3px 10px; font-size: 12px; }
+.anonbar { margin-top: 24px; }
+.row.between { justify-content: space-between; align-items: center; }
+.log.small { height: 110px; margin-top: 10px; }
+.brand-banner { background: #fff; border-radius: 16px; padding: 18px 28px; margin: 0 0 24px; display: flex; justify-content: center; }
+.brand-banner img { max-width: 560px; width: 100%; height: auto; }
 header h1 { margin: 0; font-size: 26px; letter-spacing: 0.5px; }
 header p { margin: 2px 0 0; color: var(--dim); font-size: 13px; }
 nav { display: flex; gap: 6px; }

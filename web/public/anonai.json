@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-06T13:28:03.504Z",
+  "generatedAt": "2026-11-06T16:21:13.696Z",
   "chainId": 1337,
   "gatewayUrl": "https://altmempoolgateway.forshtat.com/rpc",
   "minerUrl": "https://altmempool.forshtat.com/rpc",
@@ -16,6 +16,7 @@
     "account": "0xf7df2dba12b7915fe8690c3048f89c73f32b7db6",
     "paymaster": "0x7a628728ed1fab9dec56e23ebfd60156f4eac1c1"
   },
+  "operator": "0x74cCABd9Eeaa4BF696e71De7BC6832e8fDb5B8e0",
   "policies": [
     {
       "name": "weth-0.01",

@@ -1,6 +1,7 @@
 // Data access for the dashboard: the exported public facts (anonai.json), ethrex reads through viem, and the
 // sidecar explorer API. Everything runs in the browser; both devnet routes send permissive CORS headers.
 import { createPublicClient, defineChain, formatEther, http, type Address, type Hex } from "viem";
+import { pageFetch } from "./anon";
 
 export interface Facts {
   generatedAt: string;
@@ -15,6 +16,7 @@ export interface Facts {
   weth: Address;
   poseidonT3: Address;
   deployments: { verifier?: Address; keystore?: Address; account?: Address; paymaster?: Address };
+  operator?: Address | null;
   policies: { name: string; policyClass: Hex; target: Address; selector: Hex; maxAmount: string; maxValue: string }[];
   agents: { name: string; mode: "zk" | "key"; policyName: string; policyClass: Hex; commitment: string | null; keys: number | null; used: number | null }[];
   demoRecipient: Address;
@@ -29,11 +31,12 @@ export async function loadFacts(): Promise<Facts> {
 export const client = (f: Facts) =>
   createPublicClient({
     chain: defineChain({ id: f.chainId, name: "altmempool-devnet", nativeCurrency: { name: "ETH", symbol: "ETH", decimals: 18 }, rpcUrls: { default: { http: [f.ethrexUrl] } } }),
-    transport: http(f.ethrexUrl),
+    // every chain read goes through pageFetch, so enabling Anon-RPC covers viem's calls too
+    transport: http(f.ethrexUrl, { fetchFn: pageFetch }),
   });
 
 export async function rpc<T = any>(url: string, method: string, params: unknown[] = []): Promise<T> {
-  const res = await fetch(url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }) });
+  const res = await pageFetch(url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }) });
   const body = await res.json();
   if (body.error) throw new Error(body.error.message);
   return body.result;
