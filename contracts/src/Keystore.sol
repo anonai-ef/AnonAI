@@ -140,6 +140,11 @@ contract Keystore {
         return classes[policyClass].registrant[commitment];
     }
 
+    /// Direct set membership (used by the SharedAccount's key mode): registered and not revoked.
+    function isMember(bytes32 policyClass, uint256 leaf) external view returns (bool) {
+        return classes[policyClass].registrant[leaf] != address(0);
+    }
+
     function lastCommitBlock(bytes32 policyClass) external view returns (uint64) {
         return classes[policyClass].lastCommitBlock;
     }
