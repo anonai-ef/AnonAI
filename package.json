@@ -16,7 +16,8 @@
     "setup": "tsx src/cli/setup.ts",
     "debug": "tsx src/cli/debug.ts",
     "agent": "tsx src/cli/agent.ts",
-    "act": "tsx src/cli/act.ts"
+    "act": "tsx src/cli/act.ts",
+    "simulate": "tsx src/cli/simulate.ts"
   },
   "dependencies": {
     "@forshtat/hegota-support": "0.0.1",

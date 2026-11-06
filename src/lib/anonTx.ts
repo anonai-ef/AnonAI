@@ -8,10 +8,10 @@ export const MODE_KEY = 2n;
 
 /** Frame gas limits; measured on the devnet before the demo (docs/SPEC.md 8.3). */
 export const LIMITS = {
-  verifyZk: 400_000n,
-  verifyKey: 120_000n,
-  preVerify: 60_000n,
-  pay: 40_000n,
+  verifyZk: 600_000n,
+  verifyKey: 250_000n,
+  preVerify: 150_000n,
+  pay: 150_000n,
   body: 120_000n,
   bodyState: 200_000n,
 };

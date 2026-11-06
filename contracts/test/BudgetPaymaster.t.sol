@@ -10,22 +10,19 @@ contract BudgetPaymasterTest is HegotaMocks {
     address account = address(0xACC0);
     address stranger = address(0xBAD);
     bytes32 policy = keccak256("policy-class-1");
+    bytes32 sigHash = keccak256("tx-1");
     uint256 maxCost = 0.001 ether;
 
     BudgetPaymaster pm;
 
-    uint256 constant SENDER = 2;
-    uint256 constant MAX_COST = 6;
-    uint256 constant CURRENT_FRAME_INDEX = 10;
-    uint256 constant STATUS = 5;
+    uint256 constant TX_SIG_HASH = 8;
 
     function setUp() public {
         pm = new BudgetPaymaster{value: 1 ether}(account);
         mockApprove(address(pm));
-        mockTxParam(address(pm), SENDER, uint256(uint160(account)));
-        mockTxParam(address(pm), MAX_COST, maxCost);
-        mockTxParam(address(pm), CURRENT_FRAME_INDEX, 2); // pay runs as frame 2, right after the pre_verify frame 1
-        mockFrameParam(address(pm), 1, STATUS, 1);
+        mockTxParam(address(pm), TX_SENDER, uint256(uint160(account)));
+        mockTxParam(address(pm), TX_MAX_COST, maxCost);
+        mockTxParam(address(pm), TX_SIG_HASH, uint256(sigHash));
     }
 
     function _preVerify() internal returns (bool ok) {
@@ -40,6 +37,7 @@ contract BudgetPaymasterTest is HegotaMocks {
         pm.fund{value: 0.01 ether}(policy);
         assertTrue(_preVerify());
         assertEq(pm.budget(policy), 0.01 ether - maxCost);
+        assertEq(pm.charged(sigHash), policy);
         vm.expectEmit(address(pm));
         emit Approved(1); // Scope.PAYMENT
         assertTrue(_pay());
@@ -49,11 +47,12 @@ contract BudgetPaymasterTest is HegotaMocks {
         pm.fund{value: maxCost - 1}(policy);
         assertFalse(_preVerify());
         assertEq(pm.budget(policy), maxCost - 1);
+        assertFalse(_pay());
     }
 
     function test_refusesOtherSenders() public {
         pm.fund{value: 0.01 ether}(policy);
-        mockTxParam(address(pm), SENDER, uint256(uint160(stranger)));
+        mockTxParam(address(pm), TX_SENDER, uint256(uint160(stranger)));
         assertFalse(_preVerify());
         assertEq(pm.budget(policy), 0.01 ether);
     }
@@ -63,11 +62,18 @@ contract BudgetPaymasterTest is HegotaMocks {
         assertFalse(_pay());
     }
 
-    function test_payAfterFailedPreVerifyFails() public {
+    function test_payForAnotherTransactionsChargeFails() public {
         pm.fund{value: 0.01 ether}(policy);
         assertTrue(_preVerify());
-        mockFrameParam(address(pm), 1, STATUS, 0); // the node reports the pre_verify frame as failed
+        mockTxParam(address(pm), TX_SIG_HASH, uint256(keccak256("tx-2"))); // a different transaction
         assertFalse(_pay());
+    }
+
+    function test_cannotChargeTwiceForOneTransaction() public {
+        pm.fund{value: 0.01 ether}(policy);
+        assertTrue(_preVerify());
+        assertFalse(_preVerify());
+        assertEq(pm.budget(policy), 0.01 ether - maxCost);
     }
 
     function test_adminPathApprovesBothScopesForAdminOnly() public {

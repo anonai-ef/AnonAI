@@ -3,7 +3,7 @@
 import fs from "node:fs";
 import path from "node:path";
 
-const names = ["BudgetPaymaster", "Keystore", "SharedAccount", "SemaphoreVerifier"];
+const names = ["BudgetPaymaster", "Keystore", "SharedAccount", "SemaphoreVerifier", "OpcodeProbe"];
 fs.mkdirSync("contracts/artifacts", { recursive: true });
 for (const name of names) {
   const out = path.join("contracts/out", `${name}.sol`, `${name}.json`);

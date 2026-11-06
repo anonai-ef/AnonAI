@@ -49,7 +49,9 @@ async function main() {
   }
 
   const state = readState();
-  const stale = async (k: keyof State["deployments"]) => fresh || !state.deployments[k] || !(await hasCode(state.deployments[k]!));
+  // --redeploy paymaster,account forces specific contracts; --fresh forces all four
+  const forced = (process.argv[process.argv.indexOf("--redeploy") + 1] ?? "").split(",").filter((s) => s && process.argv.includes("--redeploy"));
+  const stale = async (k: keyof State["deployments"]) => fresh || forced.includes(k) || !state.deployments[k] || !(await hasCode(state.deployments[k]!));
   const remember = (k: keyof State["deployments"], a: Address) => writeState((s) => (s.deployments[k] = a));
 
   // 2. SemaphoreVerifier (stateless Groth16 verifier with keys for depths 1..32).
