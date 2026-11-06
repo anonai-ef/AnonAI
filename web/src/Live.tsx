@@ -321,7 +321,7 @@ function Autopilot({ f, o, cfg, run, history, log, onReset }: { f: Facts; o: Ove
             <h2>
               <span className={`pill ${cfg.mode}`}>{cfg.mode === "zk" ? "zero-knowledge" : "one-time key"}</span> agent <strong>{cfg.agent}</strong> on autopilot
             </h2>
-            <p className="lede">Pays {cfg.amountWeth} WETH to <span className="mono">{short(cfg.to)}</span> every {cfg.cadenceSec}s from the shared account. It holds no ETH and no chain key.</p>
+            <p className="lede">Pays {cfg.amountWeth} WETH to <span className="mono">{short(cfg.to)}</span> every {cfg.cadenceSec}s. No ETH, no key.</p>
           </div>
           <div className="controls">
             <div className="counter"><span className="n">{included}</span><span>included this session</span></div>

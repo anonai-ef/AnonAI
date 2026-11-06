@@ -17,6 +17,9 @@ export function App() {
 
   useEffect(() => {
     loadFacts().then(setFacts).catch((e) => setError(e.message));
+    const onHash = () => setTab(((location.hash.replace("#", "") as Tab) || "home") as Tab);
+    window.addEventListener("hashchange", onHash);
+    return () => window.removeEventListener("hashchange", onHash);
   }, []);
 
   useEffect(() => {
@@ -53,7 +56,7 @@ export function App() {
           <img className="logo" src="./logo-mark.png" alt="AnonAI" />
           <div>
             <h1>AnonAI</h1>
-            <p>Full-stack privacy for autonomous AI agents · EIP-8141 frame transactions · ERC-8421 alt-mempool · Anon-RPC reads</p>
+            <p>Full-stack privacy for autonomous AI agents</p>
           </div>
         </div>
         <AnonToggle />

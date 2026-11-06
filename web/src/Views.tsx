@@ -94,7 +94,7 @@ export function FeedView({ f, feed, selected, onSelect }: { f: Facts; feed: Admi
     <main className="split">
       <section>
         <h2>What the mempool sees</h2>
-        <p className="lede">Every row is a transaction from the shared account as the gateway sidecar admitted it. Same sender, same payer, same shape. The only thing that differs per action is the nonce key: a nullifier (zk) or a one-time address (key).</p>
+        <p className="lede">Every shared-account transaction the gateway admitted. Same sender, same payer, same shape; only the nonce key differs.</p>
         <table className="feed">
           <thead><tr><th>when</th><th>tx</th><th>outcome</th><th>authorised by</th><th>nonce key</th></tr></thead>
           <tbody>
@@ -171,40 +171,52 @@ export function decodeRevert(s: string): string {
 }
 
 export function StoryView({ f }: { f: Facts }) {
+  void f;
+  const cards = [
+    { k: "zk", n: "0", t: "keys", d: "Authorisation is a zero-knowledge proof. Signature scheme 0: nothing to steal, nothing to leak." },
+    { k: "pay", n: "0", t: "ETH on the agent", d: "A paymaster pays gas from a budget the owner set, per policy class." },
+    { k: "one", n: "1", t: "sender for every agent", d: "All actions leave one shared account. The anonymity set is the whole policy class." },
+    { k: "nonce", n: "1", t: "action per epoch", d: "The nullifier is the nonce key. The chain enforces the limit, not the agent." },
+    { k: "revoke", n: "1 tx", t: "to revoke", d: "The owner drops the leaf; the agent's next proof dies in frame 0." },
+    { k: "alt", n: "297k", t: "gas to verify", d: "Too heavy and too stateful for the canonical mempool. Only the alt-mempool admits it." },
+  ];
   return (
-    <main className="story">
-      <div className="brand-banner"><img src="./logo-full.png" alt="AnonAI: full-stack privacy for autonomous AI agents" /></div>
-      <section>
-        <h2>The problem</h2>
-        <p>An autonomous AI agent that acts on Ethereum today holds a raw private key on a server, keeps ETH on it for gas, and acts from one public address anyone can tie to its owner. Every agent-wallet product keeps all three; ERC-8004 makes the owner link explicit.</p>
+    <main className="story-screen">
+      <header className="story-head">
+        <img src="./logo-mark.png" alt="" />
+        <div>
+          <p className="eyebrow">AnonAI · EIP-8141 frame transactions · ERC-8421 alt-mempool</p>
+          <h1>An AI agent with <span className="hl">no key</span>, <span className="hl2">no ETH</span>, <span className="hl3">no name</span>.</h1>
+          <p className="tag">It proves it's allowed to act. The chain never learns who did.</p>
+        </div>
+      </header>
+
+      <section className="story-grid">
+        {cards.map((c) => (
+          <article key={c.k} className={`scard ${c.k}`}>
+            <div className="num">{c.n}</div>
+            <div className="ttl">{c.t}</div>
+            <p>{c.d}</p>
+          </article>
+        ))}
       </section>
-      <section>
-        <h2>What AnonAI does instead</h2>
-        <ol>
-          <li><strong>Keys and permissions are hidden commitments</strong> in a Keystore the owner controls (one Poseidon tree per policy class).</li>
-          <li><strong>The agent proves it is authorised with a zero-knowledge proof</strong> instead of a signature, from one shared account that many agents of many owners use. The transaction's signature scheme is 0: there is no public key.</li>
-          <li><strong>A paymaster pays gas</strong> from a budget keyed by policy class, so the agent never holds ETH.</li>
-          <li><strong>The nullifier is the nonce key</strong> (EIP-8250): one action per agent per epoch, enforced by the protocol itself.</li>
-          <li><strong>Roots are committed to the recent-root predeploy</strong> (EIP-8272) and declared by every transaction.</li>
-        </ol>
-      </section>
-      <section>
-        <h2>Why this needs the alt-mempool</h2>
-        <p>The proof check costs ~300k gas and the account reads the Keystore; the paymaster reads and writes its own budget table in a pre_verify frame. The canonical EIP-8141 mempool caps validation at 100k gas and allows only the sender's own storage. Send the same bytes to ethrex and it is rejected; send them to the standard alt-mempool as a staked entity and they are admitted.</p>
-      </section>
-      <section>
-        <h2>Measured on the devnet</h2>
-        <table>
-          <thead><tr><th>frame</th><th>gas</th></tr></thead>
-          <tbody>
-            <tr><td>only_verify, zk (Groth16 depth 10 + policy checks)</td><td>296,823</td></tr>
-            <tr><td>only_verify, key (one-time key membership)</td><td>53,591</td></tr>
-            <tr><td>pre_verify (budget charge + receipt)</td><td>42,127</td></tr>
-            <tr><td>pay</td><td>27,437</td></tr>
-            <tr><td>body (WETH transfer)</td><td>30,262</td></tr>
-          </tbody>
-        </table>
-        <p className="dim">Proof generation ≈ 300 ms. Demo recipient: <code>{f.demoRecipient}</code>.</p>
+
+      <section className="story-strip">
+        <div className="strip-l">
+          <p className="eyebrow">What the mempool sees</p>
+          <div className="chips">
+            <span className="chip">sender · shared account</span>
+            <span className="chip">payer · paymaster</span>
+            <span className="chip">signature · none</span>
+            <span className="chip">nonce key · nullifier</span>
+            <span className="chip hidden">agent · HIDDEN</span>
+            <span className="chip hidden">owner · HIDDEN</span>
+          </div>
+        </div>
+        <div className="strip-r">
+          <p className="eyebrow">In the box</p>
+          <p className="facts">Claude drives it through <strong>MCP</strong> · reads leave via <strong>Anon-RPC</strong> · proof in <strong>300 ms</strong> · <strong>4</strong> frames · live on the devnet</p>
+        </div>
       </section>
     </main>
   );
