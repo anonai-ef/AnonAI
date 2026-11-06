@@ -3,7 +3,8 @@ import { HomeView } from "./Home";
 import { LiveView } from "./Live";
 import { disableAnon, enableAnon, getAnonState, NETWORKS, subscribeAnon, type AnonState, type NetworkId } from "./lib/anon";
 import { loadFacts, loadFeed, loadOverview, type Admission, type Facts, type Overview } from "./lib/data";
-import { FeedView, StackView, StoryView } from "./Views";
+import { StoryView } from "./Story";
+import { FeedView, StackView } from "./Views";
 
 type Tab = "home" | "live" | "stack" | "feed" | "story";
 
@@ -78,7 +79,7 @@ export function App() {
       {facts && tab === "feed" && <FeedView f={facts} feed={feed} selected={selected} onSelect={setSelected} />}
       {facts && tab === "story" && <StoryView f={facts} />}
 
-      <AnonBar />
+      {tab !== "story" && <AnonBar />}
       <footer>
         {facts && (
           <>
