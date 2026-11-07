@@ -27,5 +27,5 @@
   paymasterFundingEth: "0.05",
   // Keystore heartbeat spacing in blocks (6 s each): a new epoch at most every 30 s
   epochBlocks: 5,
-  txTimeoutSec: 120,
+  txTimeoutSec: 300,
 }

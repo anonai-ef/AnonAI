@@ -52,20 +52,28 @@ export const encodeRaw = (tx: FrameTx): Hex => lib.encodeTx(profile, tx);
 /**
  * Standard alt-mempool: the gateway sidecar validates under ERC-8421 rules and gossips to the builder. Because gossip
  * between the two public nodes has been seen to drop after restarts, the same transaction is also handed to the
- * miner's sidecar (identical hash, so nothing is duplicated). The gateway's verdict is the one returned; a miner
- * rejection is reported on stderr only, since the miner may simply already have the transaction via gossip.
+ * miner's sidecar (identical hash, so nothing is duplicated). If the gateway itself refuses for an operational reason
+ * (seen: "Internal error" when its disk filled up), the miner's verdict stands on its own; the call fails only when
+ * both sidecars refuse, and then reports both reasons.
  */
 export async function sendToAltMempool(tx: FrameTx): Promise<Hex> {
   const cfg = loadConfig();
   const wire = toWire(tx);
-  const hash = await rpc<Hex>(cfg.gatewayUrl, "eth_sendFrameTransaction", [wire]);
-  if (cfg.minerUrl && cfg.minerUrl !== cfg.gatewayUrl) {
+  const targets = [cfg.gatewayUrl, ...(cfg.minerUrl && cfg.minerUrl !== cfg.gatewayUrl ? [cfg.minerUrl] : [])];
+  const errors: string[] = [];
+  let hash: Hex | undefined;
+  for (const url of targets) {
     try {
-      await rpc<Hex>(cfg.minerUrl, "eth_sendFrameTransaction", [wire]);
+      const h = await rpc<Hex>(url, "eth_sendFrameTransaction", [wire]);
+      hash ??= h;
     } catch (e) {
-      console.error(`miner sidecar did not take ${hash} directly: ${(e as Error).message}`);
+      const msg = (e as Error).message;
+      errors.push(`${url === cfg.gatewayUrl ? "gateway" : "miner"}: ${msg}`);
+      if (hash) console.error(`miner sidecar did not take ${hash} directly: ${msg}`);
     }
   }
+  if (!hash) throw new Error(`no alt-mempool sidecar admitted the transaction (${errors.join("; ")})`);
+  if (errors.length) console.error(`admitted by the miner sidecar only; ${errors[0]}`);
   return hash;
 }
 /** Canonical mempool: the same bytes to ethrex, which applies EIP-8141's own stricter rules. */

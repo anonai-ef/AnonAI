@@ -229,6 +229,8 @@ Verified with `yarn probe` and live transactions (details and dates in `docs/SPE
 
 ## Troubleshooting
 
+- **Gateway answers `Internal error` on submit, admission log shows `No space left on device`.** The gateway sidecar's disk is full (host-side). `sendToAltMempool` now falls through to the miner sidecar, which admits and includes the same bytes; the CLI prints `admitted by the miner sidecar only`. Report it to the workshop host.
+- **`TX_NOT_MINED` although the explorer later shows the transaction included.** Inclusion can take several minutes when the devnet is busy; `txTimeoutSec` in `anonai.config.json5` is 300 by default.
 | message | cause | fix |
 |---|---|---|
 | `AnonAI: budget exhausted` | the class gas budget ran out (each action reserves its max cost, ≈0.002 ETH) | `yarn agent fund <class> 0.05`; the runner tops up automatically |
