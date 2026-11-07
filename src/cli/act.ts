@@ -21,7 +21,7 @@ import { transferCalldata, wethBalance } from "../lib/weth.js";
 const log = (s: string) => console.error(s);
 
 export class ActError extends Error {
-  constructor(public readonly code: "NOT_A_MEMBER" | "EPOCH_USED" | "NO_KEYS" | "UNKNOWN_AGENT", message: string) {
+  constructor(public readonly code: "NOT_A_MEMBER" | "EPOCH_USED" | "EPOCH_PENDING" | "NO_KEYS" | "UNKNOWN_AGENT", message: string) {
     super(message);
   }
 }
@@ -118,6 +118,9 @@ async function sendOnceRetryingRace(tx: FrameTx): Promise<Hex> {
     return await sendToAltMempool(tx);
   } catch (e) {
     const msg = (e as Error).message;
+    if (msg.includes("cannot be replaced")) {
+      throw new ActError("EPOCH_PENDING", "this agent already has a transaction for the current epoch waiting in the alt-mempool (same nullifier, same fee); wait for it to be mined instead of sending another");
+    }
     if (!msg.includes("MAX_VERIFY_GAS")) throw e;
     log("sidecar simulated against a stale block (reported as MAX_VERIFY_GAS); waiting one block and retrying once…");
     await waitSidecarsNextBlock();
