@@ -1,6 +1,6 @@
 // Reads and owner-side writes against the Keystore contract.
 import { encodeFunctionData, type Address, type Hex } from "viem";
-import { blockSlot, publicClient, sendLegacy, waitMined } from "./chain.js";
+import { blockSlot, publicClient, sendLegacy, waitMined, waitSidecarsAt } from "./chain.js";
 import type { RecentRootReference } from "./frameTx.js";
 
 export const KEYSTORE_ABI = [
@@ -40,6 +40,7 @@ export class KeystoreClient {
   private async commitCall(ownerKey: Hex, data: Hex, policyClass: Hex): Promise<{ txHash: Hex; recentRoot: RecentRootReference; seq: bigint }> {
     const txHash = await sendLegacy(ownerKey, this.address, data, 0n); // gas estimated: Poseidon inserts + state gas vary
     const receipt = await waitMined(txHash);
+    await waitSidecarsAt(BigInt(receipt.blockNumber)); // the sidecars must see this root before a tx can use it
     const slot = await blockSlot(receipt.blockNumber);
     const root = await this.root(policyClass);
     const { seq } = await this.rootInfo(policyClass, root);

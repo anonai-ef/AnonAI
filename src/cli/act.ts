@@ -6,7 +6,7 @@
 // sends such a file later (demo: prepare before a revocation, send after it, watch frame 0 refuse the old root).
 import fs from "node:fs";
 import { formatEther, parseEther, type Address, type Hex } from "viem";
-import { storage, waitMined } from "../lib/chain.js";
+import { storage, waitMined, waitSidecarsNextBlock } from "../lib/chain.js";
 import { loadConfig } from "../lib/config.js";
 import { estimateGas, sendToAltMempool, sendToCanonical, toWire, txHash, type FrameTx } from "../lib/frameTx.js";
 import { buildKeyTx, buildZkTx, type Action } from "../lib/anonTx.js";
@@ -95,7 +95,7 @@ export async function submitAndWait(tx: FrameTx, note: Record<string, unknown>, 
   const cfg = loadConfig();
   const account = requireDeployment("account");
   const before = to ? await wethBalance(to) : undefined;
-  const h = await sendToAltMempool(tx);
+  const h = await sendOnceRetryingRace(tx);
   writeState((s) => (s.lastTx = h as Hex));
   onSubmitted(h);
   log(`admitted by the standard alt-mempool: ${h}; waiting for inclusion…`);
@@ -106,6 +106,27 @@ export async function submitAndWait(tx: FrameTx, note: Record<string, unknown>, 
     ...(to ? { recipientWethBefore: formatEther(before!), recipientWethAfter: formatEther(await wethBalance(to)) } : {}),
     accountWeth: formatEther(await wethBalance(account)), explorer: `${cfg.explorerUrl}tx/${h}`, ...note,
   };
+}
+
+/**
+ * A sidecar whose node trails ethrex by a block simulates the VERIFY frame against stale Keystore state; the frame
+ * reverts and the sidecar reports it as "prefix gas budget exceeded ... (MAX_VERIFY_GAS)". The same bytes pass a block
+ * later, so that one rejection is retried once after the sidecars advance.
+ */
+async function sendOnceRetryingRace(tx: FrameTx): Promise<Hex> {
+  try {
+    return await sendToAltMempool(tx);
+  } catch (e) {
+    const msg = (e as Error).message;
+    if (!msg.includes("MAX_VERIFY_GAS")) throw e;
+    log("sidecar simulated against a stale block (reported as MAX_VERIFY_GAS); waiting one block and retrying once…");
+    await waitSidecarsNextBlock();
+    try {
+      return await sendToAltMempool(tx);
+    } catch (e2) {
+      throw new Error(`${(e2 as Error).message}. "MAX_VERIFY_GAS" here means the VERIFY frame reverted in the sidecar's simulation (stale root, consumed nullifier or exhausted budget), not that the gas cap applies to a staked entity; run yarn debug <hash>.`);
+    }
+  }
 }
 
 export const serializeTx = (v: unknown) => JSON.stringify(v, (_k, x) => (typeof x === "bigint" ? `0x${x.toString(16)}` : x), 2);

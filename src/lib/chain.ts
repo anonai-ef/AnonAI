@@ -33,6 +33,34 @@ export async function waitMined(hash: Hex): Promise<any> {
 }
 
 /**
+ * Waits until every alt-mempool sidecar reports a head at or past `block`. Each sidecar simulates against its own
+ * node, which can trail ethrex by a block; a transaction that depends on a fresh Keystore root (heartbeat, register,
+ * revoke) is otherwise rejected with a misleading "prefix gas budget exceeded ... (MAX_VERIFY_GAS)". A sidecar that
+ * does not answer is skipped rather than waited on.
+ */
+export async function waitSidecarsAt(block: bigint, timeoutMs = 60_000): Promise<void> {
+  const urls = [...new Set([cfg().gatewayUrl, cfg().minerUrl].filter(Boolean))] as string[];
+  const deadline = Date.now() + timeoutMs;
+  const pending = new Set(urls);
+  while (pending.size && Date.now() < deadline) {
+    for (const u of [...pending]) {
+      try {
+        if (BigInt(await rpc<Hex>(u, "eth_blockNumber", [])) >= block) pending.delete(u);
+      } catch {
+        pending.delete(u);
+      }
+    }
+    if (pending.size) await new Promise((r) => setTimeout(r, 1500));
+  }
+}
+
+/** The next head seen by the sidecars, for retrying a submission that raced a block. */
+export async function waitSidecarsNextBlock(): Promise<void> {
+  const head = BigInt(await rpc<Hex>(cfg().ethrexUrl, "eth_blockNumber", []));
+  await waitSidecarsAt(head + 1n, 30_000);
+}
+
+/**
  * Gas for an ordinary transaction: the node's estimate plus 25%, capped by `heavyDeployGasLimit`. This devnet charges
  * state gas for code deposits, so a 23 KB contract estimates at ~38M gas while blocks allow 60M; fixed limits fail.
  */

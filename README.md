@@ -230,6 +230,7 @@ Verified with `yarn probe` and live transactions (details and dates in `docs/SPE
 ## Troubleshooting
 
 - **Gateway answers `Internal error` on submit, admission log shows `No space left on device`.** The gateway sidecar's disk is full (host-side). `sendToAltMempool` now falls through to the miner sidecar, which admits and includes the same bytes; the CLI prints `admitted by the miner sidecar only`. Report it to the workshop host.
+- **`prefix gas budget exceeded: 540100 > 100000 (MAX_VERIFY_GAS)` from both sidecars.** Not the gas cap: the VERIFY frame reverted in the sidecar's simulation. Most often the sidecar's node had not yet imported the block with the heartbeat/register/revoke the transaction depends on (seen 5 s after a heartbeat). Keystore writes now wait for both sidecars to reach the commit block, and a submission hit by this is retried once a block later. Other causes: consumed nullifier, exhausted class budget. `yarn debug <hash>` shows which.
 - **`TX_NOT_MINED` although the explorer later shows the transaction included.** Inclusion can take several minutes when the devnet is busy; `txTimeoutSec` in `anonai.config.json5` is 300 by default.
 | message | cause | fix |
 |---|---|---|
