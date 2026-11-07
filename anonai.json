@@ -1,0 +1,77 @@
+{
+  "generatedAt": "2026-11-06T16:21:13.696Z",
+  "chainId": 1337,
+  "gatewayUrl": "https://altmempoolgateway.forshtat.com/rpc",
+  "minerUrl": "https://altmempool.forshtat.com/rpc",
+  "ethrexUrl": "https://altmempool.forshtat.com",
+  "explorerUrl": "https://explorer.altmempool.wtf/",
+  "stakingRegistry": "0xd51c04d7a0b01124e84de152f4e56d9eecb22d2f",
+  "recentRootAddress": "0x0000000000000000000000000000000000008272",
+  "nonceManager": "0x0000000000000000000000000000000000008250",
+  "weth": "0x1b7d32025F7cA633943BbCC9Ec61a98ef66187b6",
+  "poseidonT3": "0x3333333C0A88F9BE4fd23ed0536F9B6c427e3B93",
+  "deployments": {
+    "verifier": "0x2454f1199cc90da48ea44ba5a99ffb183cbd582a",
+    "keystore": "0x1abbe853504e3b076cf51f6dd3465c175981f36c",
+    "account": "0xf7df2dba12b7915fe8690c3048f89c73f32b7db6",
+    "paymaster": "0x7a628728ed1fab9dec56e23ebfd60156f4eac1c1"
+  },
+  "operator": "0x74cCABd9Eeaa4BF696e71De7BC6832e8fDb5B8e0",
+  "policies": [
+    {
+      "name": "weth-0.01",
+      "policyClass": "0x6e6774474fd069a4c766cd7c82c827f8375b4932240750e49344743fd4d903fd",
+      "target": "0x1b7d32025F7cA633943BbCC9Ec61a98ef66187b6",
+      "selector": "0xa9059cbb",
+      "maxAmount": "0.01",
+      "maxValue": "0"
+    },
+    {
+      "name": "weth-0.1",
+      "policyClass": "0xee4b27ffbe169a1d6922a76a08f3afc791cdcf6faee6132b3c07c9a7b8daae03",
+      "target": "0x1b7d32025F7cA633943BbCC9Ec61a98ef66187b6",
+      "selector": "0xa9059cbb",
+      "maxAmount": "0.1",
+      "maxValue": "0"
+    }
+  ],
+  "agents": [
+    {
+      "name": "alice",
+      "mode": "key",
+      "policyName": "weth-0.01",
+      "policyClass": "0x6e6774474fd069a4c766cd7c82c827f8375b4932240750e49344743fd4d903fd",
+      "commitment": null,
+      "keys": 8,
+      "used": 2
+    },
+    {
+      "name": "bob",
+      "mode": "zk",
+      "policyName": "weth-0.01",
+      "policyClass": "0x6e6774474fd069a4c766cd7c82c827f8375b4932240750e49344743fd4d903fd",
+      "commitment": "21861640824530422872289688604979262384474177554889953496007278404713437423841",
+      "keys": null,
+      "used": null
+    },
+    {
+      "name": "carol",
+      "mode": "zk",
+      "policyName": "weth-0.01",
+      "policyClass": "0x6e6774474fd069a4c766cd7c82c827f8375b4932240750e49344743fd4d903fd",
+      "commitment": "13646524827935083595977507423601598586006152877989074045989224735940010161259",
+      "keys": null,
+      "used": null
+    },
+    {
+      "name": "claude",
+      "mode": "zk",
+      "policyName": "weth-0.01",
+      "policyClass": "0x6e6774474fd069a4c766cd7c82c827f8375b4932240750e49344743fd4d903fd",
+      "commitment": "7770657644503730305231935317209913778807814338088526220006669461417594813885",
+      "keys": null,
+      "used": null
+    }
+  ],
+  "demoRecipient": "0x8943545177806ED17B9F23F0a21ee5948eCaa776"
+}
